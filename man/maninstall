@@ -1,5 +1,7 @@
 #! /bin/sh
 
+# $Id$
+
 # SCRIPT: maninstall
 # Installs the manpages for mod_auth_ibmdb2
 # Usage: maninstall [/path/to/manpages]

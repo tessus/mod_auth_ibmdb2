@@ -1,193 +1,29 @@
 /*
- * mod_auth_ibmdb2: authentication using an IBM DB2 database
- *
- * release 0.7.1
- *
- * written by Helmut K. C. Tessarek, 02-07-2004
- *
- * http://sourceforge.net/projects/mod-auth-ibmdb2/
- *
- * mod_auth_ibmdb2 is based on mod_auth_mysql and
- * ibmdb2auth (Mike Hitchcock <mike@collegenet.com>)
- */
+  +----------------------------------------------------------------------+
+  | mod_auth_ibmdb2: authentication using an IBM DB2 database            |
+  +----------------------------------------------------------------------+
+  | Copyright (c) 2004-2006 Helmut K. C. Tessarek                        |
+  +----------------------------------------------------------------------+
+  | Licensed under the Apache License, Version 2.0 (the "License"); you  |
+  | may not use this file except in compliance with the License. You may |
+  | obtain a copy of the License at                                      |
+  | http://www.apache.org/licenses/LICENSE-2.0                           |
+  |                                                                      |
+  | Unless required by applicable law or agreed to in writing, software  |
+  | distributed under the License is distributed on an "AS IS" BASIS,    |
+  | WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or      |
+  | implied. See the License for the specific language governing         |
+  | permissions and limitations under the License.                       |
+  +----------------------------------------------------------------------+
+  | Author: Helmut K. C. Tessarek                                        |
+  +----------------------------------------------------------------------+
+  | Website: http://mod-auth-ibmdb2.sourceforge.net                      |
+  +----------------------------------------------------------------------+
+*/
 
-/*
- * Module definition information - the part between the -START and -END
- * lines below is used by Configure. This could be stored in a separate
- * instead.
- *
- * MODULE-DEFINITION-START
- * Name: ibmdb2_auth_module
- * ConfigStart
-     IBMDB2_LIB="-L/opt/IBM/db2/V8.1/lib -L/home/db2inst1/sqllib/lib/"
-     if [ "X$IBMDB2_LIB" != "X" ]; then
-         LIBS="$LIBS $IBMDB2_LIB"
-         echo " + using $IBMDB2_LIB for IBM DB2 support"
-     fi
- * ConfigEnd
- * MODULE-DEFINITION-END
- */
+/* $Id$ */
 
-/* Changelog - Contributions
- *
- *
- * 2004-05-01: Eddie Anzalone (ejne@excite.com) & Lou Springer (lou@springer.com)
- *
- *   [Caching]
- *
- * The idea is this:  The user makes a request to the password protected part of
- * the website.  The authentication scheme for this part of the website uses this
- * module that knows how to make sql requests to the database
- * to retrieve the username and md5 hashed password value.  The module then md5
- * hashes the password provided by the user (via http) and compares it to what
- * was retrieved from the sql query.  Normally (without any kind of caching)
- * every object requested from the website results in a backend sql query to
- * validate the user/pass.  So my new code is supposed to populate a local cache
- * (one per each webserver) so that we minimize the sql requests and speed up
- * the authentication process.
- *
- * The pseudo flow is this:
- *
- *    if ( check local cache for user == found ) {
- *            if (( timestamp == fresh ) && ( compare password == match )) {
- *                    return good;
- *            } else {
- *                    sql query;
- *                    cache user & password/timestamp;
- *            }
- *    } else {
- *            sql query;
- *            cache user & password/timestamp;
- *    }
- *
- * This is supposed to result in a self maintaining cache.  For example if the
- * user were to change his password, then the module will find the password
- * mismatch in the local cache, consult the backend database, then update the
- * local cache with the new value.  If the dbm cache files get deleted, it just
- * regenerates itself the next time this code is executed.
- *
- */
-
-/*
- * Tracks user/passwords/group in IBM DB2 database.  A suitable table
- * might be:
- *
- * CREATE TABLE users (
- *   username 	VARCHAR(40) NOT NULL,
- *   password 	VARCHAR(40) NOT NULL,
- *       [ any other fields if needed ]
- *   PRIMARY KEY (username)
- * )
- *
- * username must be a unique, non-empty field.  Its length is however
- * long you want it to be.
- * Any other fields in the named table will be ignored.  The actual
- * field names are configurable using the parameters listed below.
- * The defaults are "username" and "password" respectively, for
- * the user ID and the password.
- * If you like to store passwords in clear text, set
- * AuthIBMDB2CryptedPasswords to Off.  I think this is a bad idea, but
- * people have requested it.
- *
- * Usage in per-directory access conf file:
- *
- *  AuthName "IBMDB2 Testing"
- *  AuthType Basic
- *  AuthGroupFile /dev/null
- *  AuthIBMDB2Database testdb
- *  AuthIBMDB2UserTable users
- *  require valid-user
- *
- * The following parameters are optional in the config file.  The defaults
- * values are shown here.
- *
- *  AuthIBMDB2User 							<no default>
- *  AuthIBMDB2Password 						<no default>
- *  AuthIBMDB2NameField 					username
- *  AuthIBMDB2PasswordField 				password
- *  AuthIBMDB2CryptedPasswords 				On
- *  AuthIBMDB2KeepAlive 					On
- *  AuthIBMDB2Authoritative 				On
- *  AuthIBMDB2NoPasswd 						Off
- *  AuthIBMDB2GroupField 					<no default>
- *  AuthIBMDB2GroupTable 					<defaults to value of AuthIBMDB2UserTable>
- *  AuthIBMDB2UserCondition 				<no default>
- *  AuthIBMDB2GroupCondition 				<no default>
- *  AuthIBMDB2Caching						Off
- *  AuthIBMDB2GroupCaching					Off
- *  AuthIBMDB2CacheFile						/tmp/auth_cred_cache
- *  AuthIBMDB2CacheLifetime					300
- *
- * If AuthIBMDB2Authoritative is Off, then iff the user is not found in
- * the database, let other auth modules try to find the user.  Default
- * is On.
- *
- * If AuthIBMDB2KeepAlive is "On", then the server instance will keep
- * the IBMDB2 server connection open.  In this case, the first time the
- * connection is made, it will use the current set of Host, User, and
- * Password settings.  Subsequent changes to these will not affect
- * this server, so they should all be the same in every htaccess file.
- * If you need to access multiple IBMDB2 servers for this authorization
- * scheme from the same web server, then keep this setting "Off" --
- * this will open a new connection to the server every time it needs
- * one.  The values of the DB and various tables and fields are always
- * used from the current htaccess file settings.
- *
- * If AuthIBMDB2NoPasswd is "On", then any password the user enters will
- * be accepted as long as the user exists in the database.  Setting this
- * also overrides the setting for AuthIBMDB2PasswordField to be the same
- * as AuthIBMDB2NameField (so that the SQL statements still work when there
- * is no password at all in the database, and to remain backward-compatible
- * with the default values for these fields.)
- *
- * For groups, we use the same AuthIBMDB2NameField as above for the
- * user ID, and AuthIBMDB2GroupField to specify the group name.  There
- * is no default for this parameter.  Leaving it undefined means
- * groups are not implemented using IBMDB2 tables.  AuthIBMDB2GroupTable
- * specifies the table to use to get the group info.  It defaults to
- * the value of AuthIBMDB2UserTable.  If you are not using groups, you
- * do not need a "groupname" field in your database, obviously.
- *
- * A user can be a member of multiple groups, but in this case the
- * user id field *cannot* be PRIMARY KEY.  You need to have multiple
- * rows with the same user ID, one per group to which that ID belongs.
- * In this case, you MUST put the GroupTable on a separate table from
- * the user table.  This is to help prevent the user table from having
- * inconsistent passwords in it.  If each user is only in one group,
- * then the group field can be in the same table as the password
- * field.  A group-only table might look like this:
- *
- *  CREATE TABLE groups (
- *    username 		varchar(40) DEFAULT '' NOT NULL,
- *    groupname 	varchar(40) DEFAULT '' NOT NULL,
- *    create_date int,
- *    expire_date int,
- *    PRIMARY KEY (username, groupname)
- *  );
- *
- * note that you still need a user table which has the passwords in it.
- *
- * The optional directives AuthIBMDB2UserCondition and AuthIBMDB2GroupCondition
- * can be used to restrict queries made against the User and Group tables.
- * The value for each of these should be a string that you want added
- * to the end of the where-clause when querying each table.
- * For example, if your user table has an "active" field and you only want
- * users to be able to login if that field is 1, you could use a directive
- * like this:
- * AuthIBMDB2UserCondition active=1
- *
- * If AuthIBMDB2Caching	ist set to On, the user credentials are cached in a file
- * defined in AuthIBMDB2CacheFile and expires after AuthIBMDB2CacheLifetime
- * seconds.
- *
- * If AuthIBMDB2GroupCaching ist set to On, the group information is cached in
- * a cache file that is named like the file specified in AuthIBMDB2CacheFile but
- * with the extension .grp. The cache expires after AuthIBMDB2CacheLifetime
- * seconds.
- *
- * */
-
-#define MODULE_RELEASE "mod_auth_ibmdb2/0.7.1"
+#define MODULE_RELEASE "mod_auth_ibmdb2/0.7.2"
 
 #ifdef APACHE2
 #define PCALLOC apr_pcalloc

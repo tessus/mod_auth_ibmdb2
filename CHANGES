@@ -43,4 +43,6 @@ mod_auth_ibmdb2 0.4
 
  - initial release
  
-http://mod-auth-ibmdb2.sourceforge.net/
+http://mod-auth-ibmdb2.sourceforge.net
+
+$Id$
