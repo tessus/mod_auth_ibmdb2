@@ -1,0 +1,99 @@
+Copyright (c) 2004 Helmut K. C. Tessarek
+All rights reserved.
+
+written by Helmut K. C. Tessarek
+
+Last Update: 01-07-2004
+
+http://mod-auth-ibmdb2.sourceforge.net/
+
+Contents:
+---------
+
+1)  Description of the module
+2)  File descriptions
+
+1) Description of the module
+-----------------------------
+
+mod_auth_ibmdb2 is an Apache authentication module using IBM DB2 as the backend database for
+storing user and group information. The module is designed for Apache 2.x and 1.x and supports
+several encryption methods.
+
+Here is a list of the new directives that come with the module:
+
+AuthIBMDB2User 			user for connecting to the DB2 database (no default)
+
+AuthIBMDB2Password 		password for connecting to the DB2 database (no default)
+
+AuthIBMDB2Database		database name (no default)
+
+AuthIBMDB2UserTable 		name of the user table (no default)
+
+AuthIBMDB2GroupTable 		name of the group table (no default)
+
+AuthIBMDB2NameField 		name of the user field within the table (defaults to 'username')
+
+AuthIBMDB2GroupField 		name of the group field within the table (no default)
+
+AuthIBMDB2PasswordField 	name of the password field within the table (defaults to 'password')
+
+AuthIBMDB2CryptedPasswords 	passwords are stored encrypted (defaults to yes) 
+
+AuthIBMDB2KeepAlive 		connection kept open across requests (defaults to yes)
+
+AuthIBMDB2Authoritative 	lookup is authoritative (defaults to yes) 
+
+AuthIBMDB2NoPasswd 		just check, if user is in usertable (defaults to no)
+
+AuthIBMDB2UserCondition		restrict result set (no default)
+
+AuthIBMDB2GroupCondition 	restrict result set (no default)
+
+AuthIBMDB2Caching		user credentials are cached (defaults to off)
+
+AuthIBMDB2GroupCaching		group information is cached (defaults to off)
+
+AuthIBMDB2CacheFile		path to cache file (defaults to /tmp/auth_cred_cache )
+
+AuthIBMDB2CacheLifetime		cache lifetime in seconds (defaults to 300)
+
+
+
+Example how to use the module in the httpd.conf:
+
+<Directory "/var/www/my_test_dir">
+    AuthName            "DB2 Authentication"
+    AuthType            Basic
+
+    AuthIBMDB2User               db2inst1
+    AuthIBMDB2Password           db2inst1
+    AuthIBMDB2Database           auth
+    AuthIBMDB2UserTable          users
+    AuthIBMDB2NameField          username
+    AuthIBMDB2PasswordField      passwd
+
+    AuthIBMDB2CryptedPasswords   On
+    AuthIBMDB2KeepAlive          On
+    AuthIBMDB2Authoritative      On
+    AuthIBMDB2NoPasswd           Off
+
+    AuthIBMDB2GroupTable         groups
+    AuthIBMDB2GroupField         groupname
+
+    #require                     valid-user
+    require                      group admin
+    AllowOverride                None
+</Directory>
+
+
+2) File descriptions
+--------------------
+
+mod_auth_ibmdb2.c	the Apache module
+md5_crypt.h		include file for validating passwords
+makemod			bash script to compile the module
+README			this file
+INSTALL			compiling and installing instructions
+CHANGES			change log
+man/maninstall		bash script to install the manpages

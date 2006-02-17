@@ -1,0 +1,39 @@
+.TH apr_crypt "8" "June 2004" "apr_crypt" "DB2 User Defined Function"
+.SH NAME
+apr_crypt \- DB2 UDF for encrypting passwords
+.SH SYNOPSIS
+>>-APR_CRYPT--(--expression--)---------------------------------><
+.SH DESCRIPTION
+Unix crypt. The apr_crypt is compatible to the Apache function that is used in the htpasswd utility.
+.PP
+The argument can be a character string that is either a CHAR or VARCHAR not exceeding 120 bytes.
+.PP
+The result of the function is VARCHAR(13). The result can be null; if the argument is null, the result is the null value.
+.SH EXAMPLES
+1)
+.br
+Inserting the user \fItest\fR and the crypted clear text \fItestpwd\fR to the table \fIusers\fR.
+.PP
+.nf
+INSERT INTO USERS (username, password) 
+  VALUES ('test', apr_crypt('testpwd'))
+.fi
+.PP
+2)
+.br
+.nf
+SELECT apr_crypt( 'testpwd' ) FROM SYSIBM.SYSDUMMY1
+
+1            
+-------------
+cqs7uOvz8KBlk
+
+  1 record(s) selected.
+.fi
+.SH AUTHOR
+Written by Helmut K. C. Tessarek.
+.SH "BUGS"
+Hopefully none :-) But if you find one, please report it at:
+http://sourceforge.net/tracker/?func=add&group_id=103064&atid=633717
+.SH "WEB SITE"
+http://mod-auth-ibmdb2.sourceforge.net/

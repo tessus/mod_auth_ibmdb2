@@ -1,0 +1,153 @@
+.TH mod_auth_ibmdb2 "8" "July 2004" "mod_auth_ibmdb2 0.7.1" "Apache module"
+.SH NAME
+mod_auth_ibmdb2 \- Apache authentication module for DB2
+.SH DESCRIPTION
+mod_auth_ibmdb2 is an Apache authentication module using IBM DB2 as the backend database for storing user and group information.
+.PP
+The module is designed for Apache 2.x and 1.x and supports several encryption methods. 
+.SH "CONFIGURATION DIRECTIVES"
+These directives are used to control the behaviour of the authentication process.
+.PP
+.TP
+\fBAuthIBMDB2User\fR \fIusername\fR
+user for connecting to the DB2 database
+.TP
+\fBAuthIBMDB2Password\fR \fIpassword\fR
+password for connecting to the DB2 database
+.TP
+\fBAuthIBMDB2Database\fR \fIdatabase\fR
+database name
+.TP
+\fBAuthIBMDB2UserTable\fR \fIusertable\fR
+name of the user table. If not fully qualified, the user that
+was used to connect to the database is used as the schema name.
+.TP
+\fBAuthIBMDB2GroupTable\fR \fIgrouptable\fR
+name of the group table. If not fully qualified, the user that
+was used to connect to the database is used as the schema name.
+.TP
+\fBAuthIBMDB2NameField\fR \fInamefield\fR
+name of the username column within the user and group table
+.br
+default value: \fBusername\fR
+.TP
+\fBAuthIBMDB2GroupField\fR \fIgroupfield\fR
+name of the groupname column within the group table
+.TP
+\fBAuthIBMDB2PasswordField\fR \fIpasswordfield\fR
+name of the password column within the user table
+.br
+.br
+default value: \fBpassword\fR
+.TP
+\fBAuthIBMDB2CryptedPasswords\fR \fI[On|Off]\fR
+If AuthIBMDB2CryptedPasswords is "On", then the passwords are stored encrypted. You do not have to specify what kind of encryption was used. Valid encryption methods are: normal md5 hash (32 chars as in php), seeded md5 value (as generated with Apache's htpasswd utility or as in /etc/shadow), crypt. If "Off", plaintext passwords are used.
+.br
+default value: \fBOn\fR
+.TP
+\fBAuthIBMDB2KeepAlive\fR \fI[On|Off]\fR
+If AuthIBMDB2KeepAlive is "On", then the server instance will keep the IBMDB2 server connection open.
+.br
+default value: \fBOn\fR
+.TP
+\fBAuthIBMDB2Authoritative\fR \fI[On|Off]\fR
+If AuthIBMDB2Authoritative is "Off", then iff the user is not found in the database, let other auth modules try to find the user.
+.br
+default value: \fBOn\fR
+.TP
+\fBAuthIBMDB2NoPasswd\fR \fI[On|Off]\fR
+If AuthIBMDB2NoPasswd is "On", then any password the user enters will be accepted as long as the user exists in the database.
+.br
+default value: \fBOff\fR
+.TP
+\fBAuthIBMDB2UserCondition\fR \fIuser_condition\fR
+Can be used to restrict queries made against the user table. The value should be a string that you want to be added to the end of the where-clause when querying the table. For example, if your user table has an "active" field and you only want users to be able to login if that field is 1, you could use a directive like this: AuthIBMDB2UserCondition active=1
+.TP
+\fBAuthIBMDB2GroupCondition\fR \fIgroup_condition\fR
+Can be used to restrict queries made against the group table. The value should be a string that you want to be added to the end of the where-clause when querying the table. For example, if your group table has an "active" field and you only want users to be able to login if that field is 1, you could use a directive like this: AuthIBMDB2GroupCondition active=1
+.TP
+\fBAuthIBMDB2Caching\fR \fI[On|Off]\fR
+If AuthIBMDB2Caching is "On", the user credentials are cached in a file.
+.br
+default value: \fBOff\fR
+.TP
+\fBAuthIBMDB2GroupCaching\fR \fI[On|Off]\fR
+If AuthIBMDB2GroupCaching is "On", the group information is cached in a file that is named like the file specified in AuthIBMDB2CacheFile but with the extension .grp
+.br
+default value: \fBOff\fR
+.TP
+\fBAuthIBMDB2CacheFile\fR \fIfilename\fR
+defines the location and name of the cache file
+.br
+default value: \fB/tmp/auth_cred_cache\fR
+.TP
+\fBAuthIBMDB2CacheLifetime\fR \fIseconds\fR
+sets the expiration timeout in seconds of the cached elements
+.br
+default value: \fB300\fR
+.SH EXAMPLES
+Let's say you want to protect \fIhttp://yourserver/private\fR. The database where the users and groups are stored in is \fIauthdb\fR. You want to use the user \fIdb2user\fR and the password \fIdb2pwd\fR to connect to the database. The name of the usertable is \fIdb2user.users\fR and the name of the grouptable is \fIdb2user.groups\fR. The two tables look like this:
+.PP
+.nf
+usertable:
+
+USERNAME                       PASSWORD
+------------------------------ --------------------------------
+
+grouptable:
+
+USERNAME                       GROUPNAME
+------------------------------ --------------------------------
+.fi
+.PP
+The passwords are stored encrypted and the database connection should not be closed after the request. mod_auth_ibmdb2 should be the only authentication authority and a password is needed to be authenticated. The users that are in the group \fIadmin\fR should be allowed to access the protected area.
+.br
+With the above assumptions, your httpd.conf should look like this:
+.PP
+.nf
+LoadModule    ibmdb2_auth_module     modules/mod_auth_ibmdb2.so
+
+Alias         /private               "/data/private/"
+
+<Directory "/data/private">
+    AuthName                    "DB2 Authentication for private"
+    AuthType                    Basic
+
+    AuthIBMDB2User              db2user
+    AuthIBMDB2Password          db2pwd
+    AuthIBMDB2Database          authdb
+    AuthIBMDB2UserTable         users
+    AuthIBMDB2NameField         username
+    AuthIBMDB2PasswordField     password
+
+    AuthIBMDB2CryptedPasswords  On
+    AuthIBMDB2KeepAlive         On
+    AuthIBMDB2Authoritative     On
+    AuthIBMDB2NoPasswd          Off
+
+    AuthIBMDB2GroupTable        groups
+    AuthIBMDB2GroupField        groupname
+
+    require                     group admin
+    AllowOverride               None
+</Directory>
+.fi
+.PP
+You also could have ommitted the parameters 
+.br
+AuthIBMDB2NameField, AuthIBMDB2PasswordField, 
+.br
+AuthIBMDB2CryptedPasswords, AuthIBMDB2KeepAlive,
+.br
+AuthIBMDB2Authoritative, AuthIBMDB2NoPasswd
+.br
+because the default values are used in the above example.
+.SH FILES
+httpd.conf, .htaccess
+.SH AUTHOR
+Written by Helmut K. C. Tessarek.
+.SH "BUGS"
+Hopefully none :-) But if you find one, please report it at:
+http://sourceforge.net/tracker/?func=add&group_id=103064&atid=633717
+.SH "WEB SITE"
+http://mod-auth-ibmdb2.sourceforge.net/
