@@ -23,7 +23,32 @@
 
 /* $Id$ */
 
-#define MODULE_RELEASE "mod_auth_ibmdb2/0.7.2"
+/*
+   Module definition information - the part between the -START and -END
+   lines below is used by Configure. This could be stored in a separate
+   instead.
+
+   MODULE-DEFINITION-START
+   Name: ibmdb2_auth_module
+   ConfigStart
+     IBMDB2_LIB="-L/opt/IBM/db2/V8.1/lib -L/home/db2inst1/sqllib/lib/"
+     if [ "X$IBMDB2_LIB" != "X" ]; then
+         DB2_LIBS="-ldb2 -lgdbm"
+         LIBS="$LIBS $IBMDB2_LIB $DB2_LIBS"
+         echo " + using $IBMDB2_LIB for IBM DB2 support"
+     fi
+     IBMDB2_INC="-I/opt/IBM/db2/V8.1/include -I/home/db2inst1/sqllib/include/"
+     if [ "X$IBMDB2_INC" != "X" ]; then
+         INCLUDES="$INCLUDES $IBMDB2_INC"
+         echo " + using $IBMDB2_INC for IBM DB2 support"
+     fi
+     DB2_CFLAGS="-DAPACHE1"
+     CFLAGS="$CFLAGS $DB2_CFLAGS"
+   ConfigEnd
+   MODULE-DEFINITION-END
+*/
+
+#define MODULE_RELEASE "mod_auth_ibmdb2/0.8.1"
 
 #ifdef APACHE2
 #define PCALLOC apr_pcalloc
@@ -382,6 +407,7 @@ create_ibmdb2_auth_dir_config( pool *p, char *d )
 
   m->ibmdb2NameField     = "username";
   m->ibmdb2PasswordField = "password";
+  m->ibmdb2GroupField    = "groupname";
   m->ibmdb2Crypted       = 1;              			/* passwords are encrypted */
   m->ibmdb2KeepAlive     = 1;             			/* keep persistent connection */
   m->ibmdb2Authoritative = 1;              			/* we are authoritative source for users */
