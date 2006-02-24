@@ -1,0 +1,12 @@
+
+#Dependencies
+
+$(OBJS) $(OBJS_PIC): Makefile
+
+# DO NOT REMOVE
+mod_auth_ibmdb2.o: mod_auth_ibmdb2.c \
+  $(INCDIR)/httpd.h \
+  $(INCDIR)/http_config.h \
+  $(INCDIR)/http_core.h \
+  $(INCDIR)/http_log.h \
+  $(INCDIR)/http_protocol.h 
