@@ -97,3 +97,5 @@ CHANGES			change log
 man/maninstall		bash script to install the manpages
 static/.indent.pro	needed for building the module statically against Apache 1.x
 static/Makefile.tmpl	needed for building the module statically against Apache 1.x
+
+
