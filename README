@@ -32,7 +32,7 @@ AuthIBMDB2GroupTable 		name of the group table (no default)
 
 AuthIBMDB2NameField 		name of the user field within the table (defaults to 'username')
 
-AuthIBMDB2GroupField 		name of the group field within the table (no default)
+AuthIBMDB2GroupField 		name of the group field within the table (defaults to 'groupname')
 
 AuthIBMDB2PasswordField 	name of the password field within the table (defaults to 'password')
 
@@ -95,3 +95,5 @@ README			this file
 INSTALL			compiling and installing instructions
 CHANGES			change log
 man/maninstall		bash script to install the manpages
+static/.indent.pro	needed for building the module statically against Apache 1.x
+static/Makefile.tmpl	needed for building the module statically against Apache 1.x

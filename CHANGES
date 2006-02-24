@@ -1,3 +1,10 @@
+mod_auth_ibmdb2 0.8.1
+
+ - changed module definition information for compiling the module statically against Apache 1.x
+ - added information in the INSTALL file for how to compile the module statically against Apache 1.x
+ - added a directory for 2 additional files that are needed when compiling the module statically against Apache 1.x
+ - added default value for AuthIBMDB2GroupField
+
 mod_auth_ibmdb2 0.7.1
 
  - added manpages and a script for installing them
