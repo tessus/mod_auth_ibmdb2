@@ -11,6 +11,7 @@ Contents:
 1)  Building the module
 2)  Details on building the module (Linux)
 3)  Installing the manpages
+4)  Compiling the module statically against Apache 1.x
 
 1) Building the library
 -----------------------
@@ -62,3 +63,40 @@ AddModule mod_auth_ibmdb2.c
 
 Change to the ./man directory and run the script
 maninstall
+
+4) Compiling the module statically against Apache 1.x
+-----------------------------------------------------
+
+Extract the apache source code to a directory (e.g. /ext).
+
+Change into the 'modules' directory:
+
+cd /ext/apache_X.Y.ZZ/src/modules
+
+Extract mod_auth_ibmdb2-x.y.z.tar.gz into the 'modules' directory.
+
+Change into the 'mod_auth_ibmdb2' directory and copy the two files from the 
+'static' directory into the current one:
+
+cd mod_auth_ibmdb2
+cp static/.indent.pro .
+cp static/Makefile.tmpl .
+
+Change into the 'src' directory:
+
+cd ../..
+
+Add the following line to the 'Configuration' file and to the
+'Configuration.tmpl' file:
+
+AddModule modules/mod_auth_ibmdb2/mod_auth_ibmdb2.o
+
+Source the db2profile:
+
+. /home/db2inst1/sqllib/db2profile
+
+Run the 'Configure' scipt:
+
+./Configure
+
+Make the server (run 'make' in the 'src' directory).
