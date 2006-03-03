@@ -100,3 +100,6 @@ Run the 'Configure' scipt:
 ./Configure
 
 Make the server (run 'make' in the 'src' directory).
+
+Add the db2 lib directory to the end of '/etc/ld.so.conf' file and run
+'ldconfig'.
