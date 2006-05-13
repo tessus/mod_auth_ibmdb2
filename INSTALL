@@ -40,7 +40,8 @@ If the db2 library cannot be found, add the -L option to specify the
 directory where libdb2.so can be found.
 For example:
 
-apxs -c -D APACHE2 -L/home/db2inst1/sqllib/lib -I/home/db2inst1/sqllib/include -ldb2 -lcrypt $EXTRA_LFLAG mod_auth_ibmdb2.c
+apxs -c -D APACHE2 -L/home/db2inst1/sqllib/lib -I/home/db2inst1/sqllib/include
+ -ldb2 -lcrypt $EXTRA_LFLAG mod_auth_ibmdb2.c
 
 To move the DSO to the modules directory:
 
@@ -49,6 +50,9 @@ apxs -i mod_auth_ibmdb2.so
 
 - If you are using Apache 2.x:
 apxs -i mod_auth_ibmdb2.la
+
+As the next step the DB2 environment has to be set in the Apache startscript.
+You just need to source the db2profile script, which is located in DB2PATH.
 
 Finally, add the following directive to httpd.conf:
 
