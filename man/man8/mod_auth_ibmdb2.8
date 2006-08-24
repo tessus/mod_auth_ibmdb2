@@ -1,4 +1,4 @@
-.TH mod_auth_ibmdb2 "8" "July 2004" "mod_auth_ibmdb2 0.8.1" "Apache module"
+.TH mod_auth_ibmdb2 "8" "August 2006" "mod_auth_ibmdb2 0.8.2" "Apache module"
 .SH NAME
 mod_auth_ibmdb2 \- Apache authentication module for DB2
 .SH DESCRIPTION
@@ -33,6 +33,8 @@ default value: \fBusername\fR
 .TP
 \fBAuthIBMDB2GroupField\fR \fIgroupfield\fR
 name of the groupname column within the group table
+.br
+default value: \fBgroupname\fR
 .TP
 \fBAuthIBMDB2PasswordField\fR \fIpasswordfield\fR
 name of the password column within the user table
@@ -140,6 +142,8 @@ AuthIBMDB2NameField, AuthIBMDB2PasswordField,
 AuthIBMDB2CryptedPasswords, AuthIBMDB2KeepAlive,
 .br
 AuthIBMDB2Authoritative, AuthIBMDB2NoPasswd
+.br
+AuthIBMDB2GroupField
 .br
 because the default values are used in the above example.
 .SH FILES
