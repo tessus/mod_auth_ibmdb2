@@ -48,7 +48,7 @@
    MODULE-DEFINITION-END
 */
 
-#define MODULE_RELEASE "mod_auth_ibmdb2/0.8.1"
+#define MODULE_RELEASE "mod_auth_ibmdb2/0.8.2"
 
 #ifdef APACHE2
 #define PCALLOC apr_pcalloc
@@ -68,6 +68,7 @@
 #include "sqlcli1.h"
 #ifdef APACHE2
 #include "http_request.h"   				/* for ap_hook_(check_user_id | auth_checker) */
+#include "apr_env.h"
 #endif
 #include "md5_crypt.h"						/* routines for validate_pw function */
 
@@ -111,6 +112,7 @@ typedef struct {
 
 #ifdef APACHE2
 #define LOG_DBG( msg ) ap_log_rerror( APLOG_MARK, APLOG_NOERRNO|APLOG_DEBUG, 0, r, "%s", msg )
+#define LOG_DBGS( msg ) ap_log_error( APLOG_MARK, APLOG_NOERRNO|APLOG_DEBUG, 0, s, "%s", msg )
 #define LOG_ERROR( msg ) ap_log_rerror( APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, 0, r, "%s", msg )
 #else
 #define LOG_DBG( msg ) ap_log_error( APLOG_MARK, APLOG_NOERRNO|APLOG_DEBUG, r->server, "%s", msg )
@@ -250,6 +252,40 @@ typedef struct
 	int code;
 } sqlerr_t;
 
+//	function to check the environment/connection handle and to return the sqlca structure
+
+sqlerr_t get_handle_err( SQLSMALLINT htype, SQLHANDLE handle, SQLRETURN rc )
+{
+	SQLCHAR message[SQL_MAX_MESSAGE_LENGTH + 1];
+	SQLCHAR SQLSTATE[SQL_SQLSTATE_SIZE + 1];
+	SQLINTEGER sqlcode;
+	SQLSMALLINT length;
+
+	sqlerr_t sqlerr;
+
+	if (rc != SQL_SUCCESS)
+	{
+		switch( rc )
+		{
+			case SQL_INVALID_HANDLE:
+				strcpy( sqlerr.msg, "SQL_INVALID_HANDLE" );
+				break;
+			case SQL_SUCCESS_WITH_INFO:
+				strcpy( sqlerr.msg, "SQL_SUCCESS_WITH_INFO" );
+				break;
+			case SQL_ERROR:
+				SQLGetDiagRec(htype, handle, 1, SQLSTATE, &sqlcode, message, SQL_MAX_MESSAGE_LENGTH + 1, &length);
+				strcpy( sqlerr.msg, message );
+				strcpy( sqlerr.state, SQLSTATE );
+				sqlerr.code = sqlcode;
+				break;
+			default:
+				break;
+		}
+		return sqlerr;
+	}
+}
+
 /* function to check the statement handle and to return the sqlca structure */
 
 sqlerr_t get_stmt_err( SQLHANDLE stmt, SQLRETURN rc )
@@ -283,11 +319,11 @@ sqlerr_t get_stmt_err( SQLHANDLE stmt, SQLRETURN rc )
 
 SQLRETURN ibmdb2_connect( request_rec *r, ibmdb2_auth_config_rec *m )
 {
-
     char errmsg[MAXERRLEN];
     char *db  = NULL;
     char *uid = NULL;
     char *pwd = NULL;
+    sqlerr_t sqlerr;
     SQLRETURN   sqlrc;
     SQLINTEGER  dead_conn = SQL_CD_TRUE; 	/* initialize to 'conn is dead' */
 
@@ -304,20 +340,31 @@ SQLRETURN ibmdb2_connect( request_rec *r, ibmdb2_auth_config_rec *m )
        LOG_DBG( "  DB connection is dead or nonexistent; create connection" );
     }
 
-
 	LOG_DBG( "  allocate an environment handle" );
 
     /* allocate an environment handle */
 
-    SQLAllocHandle( SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv ) ;
+	sqlrc = SQLAllocHandle( SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv );
+	
+	if( sqlrc != SQL_SUCCESS )
+	{
+		sqlerr = get_handle_err( SQL_HANDLE_ENV, henv, sqlrc );
+		LOG_ERROR( "IBMDB2 error: cannot allocate an environment handle" );
+		LOG_DBG( sqlerr.msg );
+		return( SQL_ERROR );
+	}
 
     /* allocate a connection handle     */
 
-    if( SQLAllocHandle( SQL_HANDLE_DBC, henv, &hdbc ) != SQL_SUCCESS )
-    {
-	   LOG_ERROR( "IBMDB2 error: cannot allocate a connection handle" );
-       return( SQL_ERROR ) ;
-    }
+	sqlrc = SQLAllocHandle( SQL_HANDLE_DBC, henv, &hdbc );
+	
+	if( sqlrc != SQL_SUCCESS )
+	{
+		sqlerr = get_handle_err( SQL_HANDLE_ENV, henv, sqlrc );
+		LOG_ERROR( "IBMDB2 error: cannot allocate a connection handle" );
+		LOG_DBG( sqlerr.msg );
+		return( SQL_ERROR );
+	}
 
     /* Set AUTOCOMMIT ON (all we are doing are SELECTs) */
 
@@ -586,7 +633,24 @@ module ibmdb2_auth_module;
 #ifdef APACHE2
 static int mod_auth_ibmdb2_init_handler( apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptemp, server_rec *s )
 {
+	char errmsg[MAXERRLEN];
+	char *env;
+
 	ap_add_version_component( p, MODULE_RELEASE );
+
+	errmsg[0] = '\0';
+	if( apr_env_get( &env, "DB2INSTANCE", p ) != APR_SUCCESS )
+		sprintf( errmsg, "DB2INSTANCE=[%s]", "not set" );
+	else
+		sprintf( errmsg, "DB2INSTANCE=[%s]", env );
+	LOG_DBGS( errmsg );
+	
+	errmsg[0] = '\0';
+	if( apr_env_get( &env, "LD_LIBRARY_PATH", p ) != APR_SUCCESS )
+		sprintf( errmsg, "LD_LIBRARY_PATH=[%s]", "not set" );
+	else
+		sprintf( errmsg, "LD_LIBRARY_PATH=[%s]", env );
+	LOG_DBGS( errmsg );
 
     return OK;
 }
