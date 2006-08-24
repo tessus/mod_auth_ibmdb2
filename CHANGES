@@ -1,3 +1,7 @@
+mod_auth_ibmdb2 0.8.2
+
+ - added additional debugging code
+
 mod_auth_ibmdb2 0.8.1
 
  - changed module definition information for compiling the module statically against Apache 1.x
