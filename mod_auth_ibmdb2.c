@@ -23,25 +23,27 @@
 
 /* $Id$ */
 
-#define MODULE_RELEASE "mod_auth_ibmdb2/0.8.4"
+#define MODULE "mod_auth_ibmdb2"
 
 #define PCALLOC apr_pcalloc
 #define SNPRINTF apr_snprintf
 #define PSTRDUP apr_pstrdup
 
+#include "ap_provider.h"
 #include "httpd.h"
 #include "http_config.h"
 #include "http_core.h"
 #include "http_log.h"
 #include "http_protocol.h"
-#include "sqlcli1.h"
-#include "http_request.h"   				/* for ap_hook_(check_user_id | auth_checker) */
-#include "apr_env.h"
-#include "md5_crypt.h"						/* routines for validate_pw function */
+#include "http_request.h"
 
+
+#include "sqlcli1.h"
+
+#include "apr_env.h"
 #include "apr.h"
-//#include "apr_md5.h"
-//#include "apr_sha1.h"
+#include "apr_md5.h"
+#include "apr_sha1.h"
 #include "apr_strings.h"
 
 #include "mod_auth_ibmdb2.h"				// structures, defines, globals
@@ -51,9 +53,8 @@
 #include <sys/file.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <time.h>
-#include <gdbm.h>
 
+module AP_MODULE_DECLARE_DATA ibmdb2_auth_module;
 
 /*
  * Callback to close ibmdb2 handle when necessary.  Also called when a
@@ -87,34 +88,37 @@ mod_auth_ibmdb2_cleanup_child (void *notused)
 int validate_pw( const char *sent, const char *real )
 {
 	unsigned int i = 0;
-	char *result;
-
-	char ident[80];
-
-	if( real[0] == '$' && strlen(real) > 31)
+	char md5str[33];
+	unsigned char digest[APR_MD5_DIGESTSIZE];
+	apr_md5_ctx_t context;
+	char *r;
+	apr_status_t status;
+	
+	if( strlen( real ) == 32 )
 	{
-		ident[0] = '$';
-		while( real[++i] != '$' && i < strlen(real) )
-		   ident[i] = real[i];
-		ident[i] = '$'; i++; ident[i] = '\0';
+		md5str[0] = '\0';
 
-        result = encode_md5( sent, real, ident );
-
+		apr_md5_init( &context );
+		apr_md5_update( &context, sent, strlen(sent) );
+		apr_md5_final( digest, &context );
+		for( i = 0, r = md5str; i < 16; i++, r += 2 ) 
+		{
+			sprintf( r, "%02x", digest[i] );
+		}
+		*r = '\0';
+		
+		if( apr_strnatcmp( real, md5str ) == 0 )
+			return TRUE;
+		else
+			return FALSE;
 	}
-	else if( strlen( real ) == 32 )
-	{
-		result = md5( (char*)sent );
-	}
-	else
-	{
-		result = crypt( sent, real );
-    }
+	
+	status = apr_password_validate( sent, real );
 
-	if( strcmp( real, result ) == 0 )
+	if( status == APR_SUCCESS )
 	   return TRUE;
 	else
 	   return FALSE;
-
 }
 
 
@@ -402,15 +406,32 @@ command_rec ibmdb2_auth_cmds[] = {
 };
 
 
-module AP_MODULE_DECLARE_DATA ibmdb2_auth_module;
-
 static int mod_auth_ibmdb2_init_handler( apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptemp, server_rec *s )
 {
+	char *src, *tgt, *rev;
+	char release[30];
 	char errmsg[MAXERRLEN];
 	char *env;
 
-	ap_add_version_component( p, MODULE_RELEASE );
+	src = "$Revision$";
+	rev = (char*)malloc(8*sizeof(char));
+	tgt = rev;
 
+	while( *src != ':' )
+		src++;
+	src++; src++;
+
+	while( *src != '$' )
+		*tgt++ = *src++;
+	tgt--;
+	*tgt = 0;
+
+	release[0] = '\0';
+	sprintf( release, "%s/%s", MODULE, rev );
+	free(rev);
+
+	ap_add_version_component( p, release );
+	
 	errmsg[0] = '\0';
 	if( apr_env_get( &env, "DB2INSTANCE", p ) != APR_SUCCESS )
 		sprintf( errmsg, "DB2INSTANCE=[%s]", "not set" );
@@ -424,8 +445,8 @@ static int mod_auth_ibmdb2_init_handler( apr_pool_t *p, apr_pool_t *plog, apr_po
 	else
 		sprintf( errmsg, "LD_LIBRARY_PATH=[%s]", env );
 	LOG_DBGS( errmsg );
-
-    return OK;
+	
+	return OK;
 }
 
 /*
