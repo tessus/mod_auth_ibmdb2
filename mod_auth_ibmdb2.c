@@ -37,7 +37,6 @@
 #include "http_protocol.h"
 #include "http_request.h"
 
-
 #include "sqlcli1.h"
 
 #include "apr_env.h"
@@ -1151,3 +1150,11 @@ module AP_MODULE_DECLARE_DATA ibmdb2_auth_module =
 	register_hooks              			/* register hooks */
 };
 
+/*
+ * Local variables:
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ * vim600: noet sw=4 ts=4 fdm=marker
+ * vim<600: noet sw=4 ts=4
+ */

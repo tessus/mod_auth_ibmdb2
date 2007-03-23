@@ -2,7 +2,7 @@
   +----------------------------------------------------------------------+
   | caching: functions for caching mechanism                             |
   +----------------------------------------------------------------------+
-  | Copyright (c) 2006-2007 Helmut K. C. Tessarek                        |
+  | Copyright (c) 2004-2007 Helmut K. C. Tessarek                        |
   +----------------------------------------------------------------------+
   | Licensed under the Apache License, Version 2.0 (the "License"); you  |
   | may not use this file except in compliance with the License. You may |
