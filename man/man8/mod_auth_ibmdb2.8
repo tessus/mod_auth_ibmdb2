@@ -1,10 +1,10 @@
-.TH mod_auth_ibmdb2 "8" "November 2006" "mod_auth_ibmdb2" "Apache module"
+.TH mod_auth_ibmdb2 "8" "March 2007" "mod_auth_ibmdb2" "Apache module"
 .SH NAME
 mod_auth_ibmdb2 \- Apache authentication module for DB2
 .SH DESCRIPTION
 mod_auth_ibmdb2 is an Apache authentication module using IBM DB2 as the backend database for storing user and group information.
 .PP
-The module is designed for Apache 2.x and 1.x and supports several encryption methods. 
+The module is designed for Apache 2.0.x and supports several encryption methods. 
 .SH "CONFIGURATION DIRECTIVES"
 These directives are used to control the behaviour of the authentication process.
 .PP
@@ -68,6 +68,18 @@ Can be used to restrict queries made against the user table. The value should be
 \fBAuthIBMDB2GroupCondition\fR \fIgroup_condition\fR
 Can be used to restrict queries made against the group table. The value should be a string that you want to be added to the end of the where-clause when querying the table. For example, if your group table has an "active" field and you only want users to be able to login if that field is 1, you could use a directive like this: AuthIBMDB2GroupCondition active=1
 .TP
+\fBAuthIBMDB2UserProc\fR \fIuser_procedure_name\fR
+If set, the named stored procedure is responsible for returning the password of the user in question to the module. It must return exact one value - the password. If AuthIBMDB2NoPasswd is "On", then the username has to be returned instead of the password. The stored procedure must have the following parameter format:
+.br
+
+CREATE PROCEDURE user_procedure_name ( IN VARCHAR, OUT VARCHAR )
+.TP
+\fBAuthIBMDB2GroupProc\fR \fIgroup_procedure_name\fR
+If set, the named stored procedure is responsible for returning the groups the user in question belongs to. It must return an open cursor to the resultset. The stored procedure must have the following parameter format:
+.br
+
+CREATE PROCEDURE group_procedure_name ( IN VARCHAR )
+.TP
 \fBAuthIBMDB2Caching\fR \fI[On|Off]\fR
 If AuthIBMDB2Caching is "On", the user credentials are cached in a file.
 .br
@@ -88,7 +100,10 @@ sets the expiration timeout in seconds of the cached elements
 .br
 default value: \fB300\fR
 .SH EXAMPLES
-Let's say you want to protect \fIhttp://yourserver/private\fR. The database where the users and groups are stored in is \fIauthdb\fR. You want to use the user \fIdb2user\fR and the password \fIdb2pwd\fR to connect to the database. The name of the usertable is \fIdb2user.users\fR and the name of the grouptable is \fIdb2user.groups\fR. The two tables look like this:
+\fBExample 1:\fR
+.br
+
+Let's say you want to protect \fIhttp://yourserver/private\fR. The database where the users and groups are stored in is \fIauthdb\fR. You want to use the user \fIdb2user\fR and the password \fIdb2pwd\fR to connect to the database. The name of the usertable is \fIweb.users\fR and the name of the grouptable is \fIweb.groups\fR. The two tables look like this:
 .PP
 .nf
 usertable:
@@ -118,7 +133,7 @@ Alias         /private               "/data/private/"
     AuthIBMDB2User              db2user
     AuthIBMDB2Password          db2pwd
     AuthIBMDB2Database          authdb
-    AuthIBMDB2UserTable         users
+    AuthIBMDB2UserTable         web.users
     AuthIBMDB2NameField         username
     AuthIBMDB2PasswordField     password
 
@@ -127,7 +142,7 @@ Alias         /private               "/data/private/"
     AuthIBMDB2Authoritative     On
     AuthIBMDB2NoPasswd          Off
 
-    AuthIBMDB2GroupTable        groups
+    AuthIBMDB2GroupTable        web.groups
     AuthIBMDB2GroupField        groupname
 
     require                     group admin
@@ -146,6 +161,63 @@ AuthIBMDB2Authoritative, AuthIBMDB2NoPasswd
 AuthIBMDB2GroupField
 .br
 because the default values are used in the above example.
+.br
+
+\fBExample 2:\fR
+
+In this example we use the same assumptions as in the first example, except that we want to use stored procedures. For our example we add an additional column to the group table:
+.PP
+.nf
+grouptable:
+
+USERNAME                       GROUPNAME                        ACTIVE
+------------------------------ -------------------------------- --------
+.fi
+.PP
+The two stored procedures have the following structure:
+.PP
+.nf
+CREATE PROCEDURE db2user.user_sp
+(IN v_username VARCHAR(128), OUT v_password VARCHAR(128))
+LANGUAGE SQL
+BEGIN
+  SELECT password INTO v_password FROM web.users 
+WHERE username = v_username;
+END@
+
+CREATE PROCEDURE db2user.group_sp
+(IN v_username VARCHAR(128))
+LANGUAGE SQL
+DYNAMIC RESULT SETS 1
+BEGIN
+  DECLARE res CURSOR WITH RETURN FOR
+  SELECT groupname FROM web.groups 
+  WHERE username = v_username AND active = 1;
+
+  OPEN res;
+END@
+.fi
+.PP
+The stored procedures return the password and the list of groups of the user passed to them. Furthermore we want the user and group information to be cached. The directives in the httpd.conf should then look like this:
+.PP
+.nf
+<Directory "/data/private">
+    AuthName                    "DB2 Authentication for private"
+    AuthType                    Basic
+
+    AuthIBMDB2User              db2user
+    AuthIBMDB2Password          db2pwd
+    AuthIBMDB2Database          authdb
+    AuthIBMDB2UserProc          user_sp
+    AuthIBMDB2GroupProc         group_sp
+
+    AuthIBMDB2Caching           On
+    AuthIBMDB2GroupCaching      On
+
+    require                     group admin
+    AllowOverride               None
+</Directory>
+.fi
 .SH FILES
 httpd.conf, .htaccess
 .SH AUTHOR
