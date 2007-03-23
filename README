@@ -1,6 +1,6 @@
 $Id$
 
-Copyright (c) 2004-2006 Helmut K. C. Tessarek
+Copyright (c) 2004-2007 Helmut K. C. Tessarek
 written by Helmut K. C. Tessarek
 
 http://mod-auth-ibmdb2.sourceforge.net
@@ -15,7 +15,7 @@ Contents:
 -----------------------------
 
 mod_auth_ibmdb2 is an Apache authentication module using IBM DB2 as the backend database for
-storing user and group information. The module is designed for Apache 2.x and 1.x and supports
+storing user and group information. The module is designed for Apache 2.0.x and supports
 several encryption methods.
 
 Here is a list of the new directives that come with the module:
@@ -47,6 +47,10 @@ AuthIBMDB2NoPasswd 		just check, if user is in usertable (defaults to no)
 AuthIBMDB2UserCondition		restrict result set (no default)
 
 AuthIBMDB2GroupCondition 	restrict result set (no default)
+
+AuthIBMDB2UserProc		stored procedure for user authentication (no default)
+
+AuthIBMDB2GroupProc		stored procedure for group authentication (no default)
 
 AuthIBMDB2Caching		user credentials are cached (defaults to off)
 
@@ -84,18 +88,47 @@ Example how to use the module in the httpd.conf:
     AllowOverride                None
 </Directory>
 
+or
+
+<Directory "/var/www/my_test_dir">
+    AuthName            "DB2 Authentication"
+    AuthType            Basic
+
+    AuthIBMDB2User               db2inst1
+    AuthIBMDB2Password           db2inst1
+    AuthIBMDB2Database           auth
+    AuthIBMDB2UserProc           user_sp
+    AuthIBMDB2GroupProc          group_sp
+
+    AuthIBMDB2Caching            On
+    AuthIBMDB2GroupCaching       On
+
+    require                      group admin
+    AllowOverride                None
+</Directory>
+
+where the stored procedures must have the following parameter format:
+
+CREATE PROCEDURE user_sp  ( IN VARCHAR, OUT VARCHAR )
+CREATE PROCEDURE group_sp ( IN VARCHAR )
+
+The stored procedure for user authentication must return exact one value -
+the password. If AuthIBMDB2NoPasswd is set to yes, then the username has
+to be returned instead of the password.
+
+The stored procedure for group authentication must return an open cursor
+to the resultset.
+
+Two examples for stored procedures are given in the documentation.
 
 2) File descriptions
 --------------------
 
 mod_auth_ibmdb2.c	the Apache module
-md5_crypt.h		include file for validating passwords
+mod_auth_ibmdb2.h	the Apache module's header file
+caching.h		include file for caching mechanism
 makemod			bash script to compile the module
 README			this file
 INSTALL			compiling and installing instructions
 CHANGES			change log
 man/maninstall		bash script to install the manpages
-static/.indent.pro	needed for building the module statically against Apache 1.x
-static/Makefile.tmpl	needed for building the module statically against Apache 1.x
-
-

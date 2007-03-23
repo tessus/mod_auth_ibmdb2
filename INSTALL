@@ -1,6 +1,6 @@
 $Id$
 
-Copyright (c) 2004-2006 Helmut K. C. Tessarek
+Copyright (c) 2004-2007 Helmut K. C. Tessarek
 written by Helmut K. C. Tessarek
 
 http://mod-auth-ibmdb2.sourceforge.net
@@ -11,12 +11,11 @@ Contents:
 1)  Building the module
 2)  Details on building the module (Linux)
 3)  Installing the manpages
-4)  Compiling the module statically against Apache 1.x
 
 1) Building the library
 -----------------------
 
-Please change the PATH settings, APACHEVERSION and the APXS variable 
+Please change the PATH settings and the APXS variable 
 in the makemod script for your environment.
 
 run as root: ./makemod
@@ -27,12 +26,7 @@ run as root: ./makemod
 DB2PATH=/home/db2inst1/sqllib
 EXTRA_LFLAG="-Wl,-rpath,$DB2PATH/lib"
 
-- If you are using Apache 1.x:
-
-apxs -c -D APACHE1 -ldb2 -lcrypt $EXTRA_LFLAG mod_auth_ibmdb2.c
-
-- If you are using Apache 2.x:
-apxs -c -D APACHE2 -ldb2 -lcrypt $EXTRA_LFLAG mod_auth_ibmdb2.c
+apxs -c -D APACHE2 -ldb2 $EXTRA_LFLAG mod_auth_ibmdb2.c
 
 If the sqlcli1.h header file cannot be found, add the -I option to specify the
 directory where sqlcli1.h can be found.
@@ -41,14 +35,10 @@ directory where libdb2.so can be found.
 For example:
 
 apxs -c -D APACHE2 -L/home/db2inst1/sqllib/lib -I/home/db2inst1/sqllib/include
- -ldb2 -lcrypt $EXTRA_LFLAG mod_auth_ibmdb2.c
+ -ldb2 $EXTRA_LFLAG mod_auth_ibmdb2.c
 
 To move the DSO to the modules directory:
 
-- If you are using Apache 1.x:
-apxs -i mod_auth_ibmdb2.so
-
-- If you are using Apache 2.x:
 apxs -i mod_auth_ibmdb2.la
 
 As the next step the DB2 environment has to be set in the Apache startscript.
@@ -58,52 +48,8 @@ Finally, add the following directive to httpd.conf:
 
 LoadModule ibmdb2_auth_module modules/mod_auth_ibmdb2.so
 
-You may also need to add:
-
-AddModule mod_auth_ibmdb2.c
-
 3) Installing the manpages
 --------------------------
 
 Change to the ./man directory and run the script
 maninstall
-
-4) Compiling the module statically against Apache 1.x
------------------------------------------------------
-
-Extract the apache source code to a directory (e.g. /ext).
-
-Change into the 'modules' directory:
-
-cd /ext/apache_X.Y.ZZ/src/modules
-
-Extract mod_auth_ibmdb2-x.y.z.tar.gz into the 'modules' directory.
-
-Change into the 'mod_auth_ibmdb2' directory and copy the two files from the 
-'static' directory into the current one:
-
-cd mod_auth_ibmdb2
-cp static/.indent.pro .
-cp static/Makefile.tmpl .
-
-Change into the 'src' directory:
-
-cd ../..
-
-Add the following line to the 'Configuration' file and to the
-'Configuration.tmpl' file:
-
-AddModule modules/mod_auth_ibmdb2/mod_auth_ibmdb2.o
-
-Source the db2profile:
-
-. /home/db2inst1/sqllib/db2profile
-
-Run the 'Configure' scipt:
-
-./Configure
-
-Make the server (run 'make' in the 'src' directory).
-
-Add the db2 lib directory to the end of '/etc/ld.so.conf' file and run
-'ldconfig'.
