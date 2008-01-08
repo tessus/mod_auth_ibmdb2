@@ -1,6 +1,6 @@
 $Id$
 
-Copyright (c) 2004-2007 Helmut K. C. Tessarek
+Copyright (c) 2004-2008 Helmut K. C. Tessarek
 written by Helmut K. C. Tessarek
 
 http://mod-auth-ibmdb2.sourceforge.net
@@ -26,7 +26,7 @@ run as root: ./makemod
 DB2PATH=/home/db2inst1/sqllib
 EXTRA_LFLAG="-Wl,-rpath,$DB2PATH/lib"
 
-apxs -c -D APACHE2 -ldb2 $EXTRA_LFLAG mod_auth_ibmdb2.c
+apxs -c -ldb2 $EXTRA_LFLAG mod_auth_ibmdb2.c
 
 If the sqlcli1.h header file cannot be found, add the -I option to specify the
 directory where sqlcli1.h can be found.
@@ -34,7 +34,7 @@ If the db2 library cannot be found, add the -L option to specify the
 directory where libdb2.so can be found.
 For example:
 
-apxs -c -D APACHE2 -L/home/db2inst1/sqllib/lib -I/home/db2inst1/sqllib/include
+apxs -c -L/home/db2inst1/sqllib/lib -I/home/db2inst1/sqllib/include
  -ldb2 $EXTRA_LFLAG mod_auth_ibmdb2.c
 
 To move the DSO to the modules directory:

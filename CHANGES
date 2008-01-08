@@ -1,3 +1,9 @@
+mod_auth_ibmdb2 1.10
+
+ - got rid of the newline character in SQL error messages
+ - added code to compile the module under win32 as well
+ - added script for compiling the module under win32
+
 mod_auth_ibmdb2 1.9
 
  - changed password validation to use APR
