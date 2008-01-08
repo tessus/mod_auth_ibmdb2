@@ -2,7 +2,7 @@
   +----------------------------------------------------------------------+
   | mod_auth_ibmdb2: authentication using an IBM DB2 database            |
   +----------------------------------------------------------------------+
-  | Copyright (c) 2004-2007 Helmut K. C. Tessarek                        |
+  | Copyright (c) 2004-2008 Helmut K. C. Tessarek                        |
   +----------------------------------------------------------------------+
   | Licensed under the Apache License, Version 2.0 (the "License"); you  |
   | may not use this file except in compliance with the License. You may |
@@ -48,10 +48,12 @@
 #include "mod_auth_ibmdb2.h"				// structures, defines, globals
 #include "caching.h"						// functions for caching mechanism
 
+#ifndef WIN32
 #include <sys/types.h>
 #include <sys/file.h>
 #include <unistd.h>
 #include <fcntl.h>
+#endif
 
 module AP_MODULE_DECLARE_DATA ibmdb2_auth_module;
 
@@ -135,6 +137,7 @@ sqlerr_t get_handle_err( SQLSMALLINT htype, SQLHANDLE handle, SQLRETURN rc )
 	SQLCHAR SQLSTATE[SQL_SQLSTATE_SIZE + 1];
 	SQLINTEGER sqlcode;
 	SQLSMALLINT length;
+	SQLCHAR *p = NULL;
 
 	sqlerr_t sqlerr;
 
@@ -150,6 +153,18 @@ sqlerr_t get_handle_err( SQLSMALLINT htype, SQLHANDLE handle, SQLRETURN rc )
 				break;
 			case SQL_ERROR:
 				SQLGetDiagRec(htype, handle, 1, SQLSTATE, &sqlcode, message, SQL_MAX_MESSAGE_LENGTH + 1, &length);
+#ifdef WIN32
+				if (message[length-2] == '\r')
+				{
+					p = &message[length-2];
+					*p = '\0';
+				}
+#endif
+				if (message[length-1] == '\n')	//get rid of the next line character
+				{
+					p = &message[length-1];
+					*p = '\0';
+				}
 				strcpy( sqlerr.msg, message );
 				strcpy( sqlerr.state, SQLSTATE );
 				sqlerr.code = sqlcode;
@@ -157,8 +172,8 @@ sqlerr_t get_handle_err( SQLSMALLINT htype, SQLHANDLE handle, SQLRETURN rc )
 			default:
 				break;
 		}
-		return sqlerr;
 	}
+	return sqlerr;
 }
 /* }}} */
 
@@ -171,20 +186,31 @@ sqlerr_t get_stmt_err( SQLHANDLE stmt, SQLRETURN rc )
 	SQLCHAR message[SQL_MAX_MESSAGE_LENGTH + 1];
 	SQLCHAR SQLSTATE[SQL_SQLSTATE_SIZE + 1];
 	SQLINTEGER sqlcode;
-    SQLSMALLINT length;
+	SQLSMALLINT length;
+	SQLCHAR *p = NULL;
 
     sqlerr_t sqlerr;
 
     if (rc != SQL_SUCCESS)
     {
 		SQLGetDiagRec(SQL_HANDLE_STMT, stmt, 1, SQLSTATE, &sqlcode, message, SQL_MAX_MESSAGE_LENGTH + 1, &length);
-
+#ifdef WIN32
+		if (message[length-2] == '\r')
+		{
+			p = &message[length-2];
+			*p = '\0';
+		}
+#endif
+		if (message[length-1] == '\n')	//get rid of the next line character
+		{
+			p = &message[length-1];
+			*p = '\0';
+		}
 		strcpy( sqlerr.msg, message );
 		strcpy( sqlerr.state, SQLSTATE );
 		sqlerr.code = sqlcode;
-
-		return sqlerr;
 	}
+	return sqlerr;
 }
 /* }}} */
 
@@ -436,20 +462,23 @@ static command_rec ibmdb2_auth_cmds[] =
 static int mod_auth_ibmdb2_init_handler( apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptemp, server_rec *s )
 {
 	char *src, *tgt, *rev;
-	char release[30];
+	char release[40];
 	char errmsg[MAXERRLEN];
 	char *env;
+	int srclen = 0, i = 0;
 
 	src = "$Revision$";
-	rev = (char*)malloc(8*sizeof(char));
+	srclen = strlen(src);
+	rev = (char*)malloc(srclen*sizeof(char));
 	tgt = rev;
 
-	while( *src != ':' )
-		src++;
-	src++; src++;
+	while( *src != ':' && i < srclen )
+		src++; i++;
+	if( *src == ':' )
+		src++; src++;
 
-	while( *src != '$' )
-		*tgt++ = *src++;
+	while( *src != '$' && i < srclen )
+		*tgt++ = *src++; i++;
 	tgt--;
 	*tgt = 0;
 
