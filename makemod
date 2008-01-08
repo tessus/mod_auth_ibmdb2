@@ -41,7 +41,7 @@ fi
 
 # Build the module
 
-$APXS -c -D $APACHEVERSION -I$DB2PATH/include -L$DB2PATH/lib $EXTRA_LFLAG -ldb2 mod_auth_ibmdb2.c
+$APXS -c -I$DB2PATH/include -L$DB2PATH/lib $EXTRA_LFLAG -ldb2 mod_auth_ibmdb2.c
 
 # Moving the module to the apropriate directory
 
