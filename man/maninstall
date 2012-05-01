@@ -3,7 +3,7 @@
 # $Id$
 
 # SCRIPT: maninstall
-# Installs the manpages for mod_auth_ibmdb2
+# Installs the manpages for db2-auth-routines
 # Usage: maninstall [/path/to/manpages]
 
 if [ -n "$1" ]
@@ -47,13 +47,13 @@ else
 	echo "directory $path created."
 fi
 
-if [ "`uname`" = "Linux" ]
+if [ "`uname`" == "Linux" ]
 then
-	gzip ./man8/*
-	cp ./man8/* $path
-	gunzip ./man8/*
+	gzip ./man8/*.8
+	cp ./man8/*.gz $path
+	gunzip ./man8/*.gz
 else
-	cp ./man8/* $path
+	cp ./man8/*.8 $path
 fi
 
 echo "Manpages installed in directory $path"
