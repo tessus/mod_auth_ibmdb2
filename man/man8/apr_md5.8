@@ -1,14 +1,16 @@
-.TH apr_md5 "8" "June 2004" "apr_md5" "DB2 User Defined Function"
+.TH apr_md5 "8" "April 2012" "apr_md5" "DB2 User Defined Function and Stored Procedure"
 .SH NAME
-apr_md5 \- DB2 UDF for encrypting passwords
+apr_md5 \- DB2 UDF and SP for encrypting passwords
 .SH SYNOPSIS
 >>-APR_MD5--(--expression--)-----------------------------------><
+.PP
+>>-APR_MD5--(--expression--,--hash--)--------------------------><
 .SH DESCRIPTION
-Seeded MD5 hash. The apr_md5 function is compatible to the Apache function that is used in the htpasswd utility.
+Seeded MD5 hash. The apr_md5 routine is compatible to the Apache function that is used in the htpasswd utility.
 .PP
 The argument can be a character string that is either a CHAR or VARCHAR not exceeding 120 bytes.
 .PP
-The result of the function is VARCHAR(37). The result can be null; if the argument is null, the result is the null value.
+The result of the function is CHAR(37). The result can be null; if the argument is null, the result is the null value.
 .SH EXAMPLES
 1)
 .br
@@ -24,13 +26,26 @@ INSERT INTO USERS (username, password)
 2)
 .br
 .nf
-SELECT apr_md5( 'testpwd' ) FROM SYSIBM.SYSDUMMY1
+SELECT apr_md5('testpwd') FROM SYSIBM.SYSDUMMY1
 
 1                                    
 -------------------------------------
 $apr1$HsTNH...$bmlPUSoPOF/Qhznl.sAq6/
 
   1 record(s) selected.
+.fi
+.PP
+3)
+.br
+.nf
+CALL apr_md5('testpwd', ?)
+
+  Value of output parameters
+  --------------------------
+  Parameter Name  : HASH
+  Parameter Value : $apr1$HsTNH...$bmlPUSoPOF/Qhznl.sAq6/
+
+  Return Status = 0
 .fi
 .SH AUTHOR
 Written by Helmut K. C. Tessarek.

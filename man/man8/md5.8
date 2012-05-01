@@ -1,14 +1,16 @@
-.TH md5 "8" "June 2004" "md5" "DB2 User Defined Function"
+.TH md5 "8" "April 2012" "md5" "DB2 User Defined Function and Stored Procedure"
 .SH NAME
-md5 \- DB2 UDF for encrypting passwords
+md5 \- DB2 UDF and SP for encrypting passwords
 .SH SYNOPSIS
 >>-MD5--(--expression--)---------------------------------------><
+.PP
+>>-MD5--(--expression--,--hash--)------------------------------><
 .SH DESCRIPTION
-MD5 hash. The md5 function is compatible to the PHP md5 function.
+MD5 hash. The md5 routine is compatible to the PHP md5 function.
 .PP
 The argument can be a character string that is either a CHAR or VARCHAR not exceeding 120 bytes.
 .PP
-The result of the function is VARCHAR(32). The result can be null; if the argument is null, the result is the null value.
+The result of the function is CHAR(32). The result can be null; if the argument is null, the result is the null value.
 .SH EXAMPLES
 1)
 .br
@@ -29,6 +31,19 @@ SELECT md5( 'testpwd' ) FROM SYSIBM.SYSDUMMY1
 342df5b036b2f28184536820af6d1caf
 
   1 record(s) selected.
+.fi
+.PP
+3)
+.br
+.nf
+CALL md5('testpwd', ?)
+
+  Value of output parameters
+  --------------------------
+  Parameter Name  : HASH
+  Parameter Value : 342df5b036b2f28184536820af6d1caf
+
+  Return Status = 0
 .fi
 .SH AUTHOR
 Written by Helmut K. C. Tessarek.
