@@ -1,4 +1,4 @@
-.TH mod_auth_ibmdb2 "8" "March 2007" "mod_auth_ibmdb2" "Apache module"
+.TH mod_auth_ibmdb2 "8" "May 2012" "mod_auth_ibmdb2" "Apache module"
 .SH NAME
 mod_auth_ibmdb2 \- Apache authentication module for DB2
 .SH DESCRIPTION
@@ -9,14 +9,22 @@ The module is designed for Apache 2.0.x and supports several encryption methods.
 These directives are used to control the behaviour of the authentication process.
 .PP
 .TP
+\fBAuthIBMDB2Database\fR \fIdatabase\fR
+database name
+.TP
+\fBAuthIBMDB2Hostname\fR \fIhostname\fR
+database server hostname (for uncataloged databases)
+.TP
+\fBAuthIBMDB2Portnumber\fR \fIport number\fR
+database instance port
+.br
+default value: \fB50000\fR
+.TP
 \fBAuthIBMDB2User\fR \fIusername\fR
 user for connecting to the DB2 database
 .TP
 \fBAuthIBMDB2Password\fR \fIpassword\fR
 password for connecting to the DB2 database
-.TP
-\fBAuthIBMDB2Database\fR \fIdatabase\fR
-database name
 .TP
 \fBAuthIBMDB2UserTable\fR \fIusertable\fR
 name of the user table. If not fully qualified, the user that
