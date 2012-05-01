@@ -2,7 +2,7 @@
   +----------------------------------------------------------------------+
   | mod_auth_ibmdb2: authentication using an IBM DB2 database            |
   +----------------------------------------------------------------------+
-  | Copyright (c) 2004-2008 Helmut K. C. Tessarek                        |
+  | Copyright (c) 2004-2012 Helmut K. C. Tessarek                        |
   +----------------------------------------------------------------------+
   | Licensed under the Apache License, Version 2.0 (the "License"); you  |
   | may not use this file except in compliance with the License. You may |
@@ -225,9 +225,12 @@ sqlerr_t get_stmt_err( SQLHANDLE stmt, SQLRETURN rc )
 SQLRETURN ibmdb2_connect( request_rec *r, ibmdb2_auth_config_rec *m )
 {
 	char errmsg[MAXERRLEN];
+	char dsn[MAX_DSN_LENGTH];
 	char *db  = NULL;
 	char *uid = NULL;
 	char *pwd = NULL;
+	char *host = NULL;
+	int port = 0;
 	sqlerr_t sqlerr;
 	SQLRETURN   sqlrc = SQL_SUCCESS;
 	SQLINTEGER  dead_conn = SQL_CD_TRUE; 	// initialize to 'conn is dead'
@@ -285,8 +288,21 @@ SQLRETURN ibmdb2_connect( request_rec *r, ibmdb2_auth_config_rec *m )
 	pwd = m->ibmdb2passwd;
 	db  = m->ibmdb2DB;
 	
-	sqlrc = SQLConnect( hdbc, db, SQL_NTS, uid, SQL_NTS, pwd, SQL_NTS );
+	host = m->ibmdb2host;
+	port = m->ibmdb2port;
 	
+	if( !host || (strcmp(host, "NULL") == 0) ) // if hostname not set or not string 'NULL', assume a cataloged database
+	{
+		sqlrc = SQLConnect( hdbc, db, SQL_NTS, uid, SQL_NTS, pwd, SQL_NTS );
+		LOG_DBG( "  SQLConnect" );
+	} 
+	else
+	{
+		SNPRINTF( dsn, sizeof(dsn), "Driver={IBM DB2 ODBC DRIVER};Database=%s;Hostname=%s;Port=%d; Protocol=TCPIP;Uid=%s;Pwd=%s;", db, host, port, uid, pwd );
+		sqlrc = SQLDriverConnect(hdbc, (SQLHWND)NULL, (SQLCHAR*)dsn, SQL_NTS, NULL, 0, NULL, SQL_DRIVER_NOPROMPT );
+		LOG_DBG( "  SQLDriverConnect" ); 
+	}
+
 	if( sqlrc != SQL_SUCCESS )
 	{
 		sqlerr = get_handle_err( SQL_HANDLE_DBC, hdbc, sqlrc );
@@ -362,6 +378,7 @@ static void *create_ibmdb2_auth_dir_config( apr_pool_t *p, char *d )
 	m->ibmdb2NoPasswd      = 0;							// we require password
 	m->ibmdb2caching       = 0;							// user caching is turned off
 	m->ibmdb2grpcaching    = 0;							// group caching is turned off
+	m->ibmdb2port          = 50000;                     // default instance port number
 	m->ibmdb2cachefile     = "/tmp/auth_cred_cache";	// default cachefile
 	m->ibmdb2cachelifetime = "300";						// cache expires in 300 seconds (5 minutes)
 
@@ -373,6 +390,18 @@ static void *create_ibmdb2_auth_dir_config( apr_pool_t *p, char *d )
 */
 static command_rec ibmdb2_auth_cmds[] = 
 {
+	AP_INIT_TAKE1("AuthIBMDB2Database", ap_set_string_slot,
+	(void *) APR_XtOffsetOf(ibmdb2_auth_config_rec, ibmdb2DB),
+	OR_AUTHCFG, "ibmdb2 database name"),
+	
+	AP_INIT_TAKE1("AuthIBMDB2Hostname", ap_set_string_slot,
+	(void *) APR_XtOffsetOf(ibmdb2_auth_config_rec, ibmdb2host),
+	OR_AUTHCFG, "ibmdb2 database server hostname"),
+	
+	AP_INIT_TAKE1("AuthIBMDB2Portnumber", ap_set_int_slot,
+	(void *) APR_XtOffsetOf(ibmdb2_auth_config_rec, ibmdb2port),
+	OR_AUTHCFG, "ibmdb2 database instance port"),
+
 	AP_INIT_TAKE1("AuthIBMDB2User", ap_set_string_slot,
 	(void *) APR_XtOffsetOf(ibmdb2_auth_config_rec, ibmdb2user),
 	OR_AUTHCFG, "ibmdb2 server user name"),
@@ -380,10 +409,6 @@ static command_rec ibmdb2_auth_cmds[] =
 	AP_INIT_TAKE1("AuthIBMDB2Password", ap_set_string_slot,
 	(void *) APR_XtOffsetOf(ibmdb2_auth_config_rec, ibmdb2passwd),
 	OR_AUTHCFG, "ibmdb2 server user password"),
-
-	AP_INIT_TAKE1("AuthIBMDB2Database", ap_set_string_slot,
-	(void *) APR_XtOffsetOf(ibmdb2_auth_config_rec, ibmdb2DB),
-	OR_AUTHCFG, "ibmdb2 database name"),
 
 	AP_INIT_TAKE1("AuthIBMDB2UserTable", ap_set_string_slot,
 	(void *) APR_XtOffsetOf(ibmdb2_auth_config_rec, ibmdb2pwtable),
@@ -483,7 +508,7 @@ static int mod_auth_ibmdb2_init_handler( apr_pool_t *p, apr_pool_t *plog, apr_po
 	*tgt = 0;
 
 	release[0] = '\0';
-	sprintf( release, "%s/%s", MODULE, rev );
+	SNPRINTF( release, sizeof(release), "%s/%s", MODULE, rev );
 	free(rev);
 
 	ap_add_version_component( p, release );
@@ -1318,7 +1343,14 @@ static int ibmdb2_check_auth( request_rec *r )
 			if( !groups && !(groups = get_ibmdb2_groups(r, user, sec)) )
 			{
 				errmsg[0] = '\0';
-				sprintf( errmsg, "user [%s] not in group table [%s]; uri=[%s]", user, sec->ibmdb2grptable, r->uri );
+				if( sec->ibmdb2GroupProc )
+				{
+					sprintf( errmsg, "user [%s] not returned from SP [%s]; uri=[%s]", user, sec->ibmdb2GroupProc, r->uri );
+				}
+				else
+				{
+					sprintf( errmsg, "user [%s] not in group table [%s]; uri=[%s]", user, sec->ibmdb2grptable, r->uri );
+				}
 				LOG_DBG( errmsg );
 
 				ap_note_basic_auth_failure(r);
