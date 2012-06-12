@@ -1,6 +1,6 @@
 $Id$
 
-Copyright (c) 2004-2008 Helmut K. C. Tessarek
+Copyright (c) 2004-2012 Helmut K. C. Tessarek
 written by Helmut K. C. Tessarek
 
 http://mod-auth-ibmdb2.sourceforge.net
@@ -20,53 +20,58 @@ several encryption methods.
 
 Here is a list of the new directives that come with the module:
 
-AuthIBMDB2User 			user for connecting to the DB2 database (no default)
 
-AuthIBMDB2Password 		password for connecting to the DB2 database (no default)
+AuthIBMDB2Database              database name (no default)
 
-AuthIBMDB2Database		database name (no default)
+AuthIBMDB2Hostname              database server hostname for uncataloged databases (no default)
 
-AuthIBMDB2UserTable 		name of the user table (no default)
+AuthIBMDB2Portnumber            database instance port (default: 50000)
 
-AuthIBMDB2GroupTable 		name of the group table (no default)
+AuthIBMDB2User                  user for connecting to the DB2 database (no default)
 
-AuthIBMDB2NameField 		name of the user field within the table (defaults to 'username')
+AuthIBMDB2Password              password for connecting to the DB2 database (no default)
 
-AuthIBMDB2GroupField 		name of the group field within the table (defaults to 'groupname')
+AuthIBMDB2UserTable             name of the user table (no default)
 
-AuthIBMDB2PasswordField 	name of the password field within the table (defaults to 'password')
+AuthIBMDB2GroupTable            name of the group table (no default)
 
-AuthIBMDB2CryptedPasswords 	passwords are stored encrypted (defaults to yes) 
+AuthIBMDB2NameField             name of the user field within the table (default: username)
 
-AuthIBMDB2KeepAlive 		connection kept open across requests (defaults to yes)
+AuthIBMDB2GroupField            name of the group field within the table (default: groupname)
 
-AuthIBMDB2Authoritative 	lookup is authoritative (defaults to yes) 
+AuthIBMDB2PasswordField         name of the password field within the table (default: password)
 
-AuthIBMDB2NoPasswd 		just check, if user is in usertable (defaults to no)
+AuthIBMDB2CryptedPasswords      passwords are stored encrypted (default: yes) 
 
-AuthIBMDB2UserCondition		restrict result set (no default)
+AuthIBMDB2KeepAlive             connection kept open across requests (default: yes)
 
-AuthIBMDB2GroupCondition 	restrict result set (no default)
+AuthIBMDB2Authoritative         lookup is authoritative (default: yes) 
 
-AuthIBMDB2UserProc		stored procedure for user authentication (no default)
+AuthIBMDB2NoPasswd              just check, if user is in usertable (default: no)
 
-AuthIBMDB2GroupProc		stored procedure for group authentication (no default)
+AuthIBMDB2UserCondition         restrict result set (no default)
 
-AuthIBMDB2Caching		user credentials are cached (defaults to off)
+AuthIBMDB2GroupCondition        restrict result set (no default)
 
-AuthIBMDB2GroupCaching		group information is cached (defaults to off)
+AuthIBMDB2UserProc              stored procedure for user authentication (no default)
 
-AuthIBMDB2CacheFile		path to cache file (defaults to /tmp/auth_cred_cache )
+AuthIBMDB2GroupProc             stored procedure for group authentication (no default)
 
-AuthIBMDB2CacheLifetime		cache lifetime in seconds (defaults to 300)
+AuthIBMDB2Caching               user credentials are cached (default: off)
+
+AuthIBMDB2GroupCaching          group information is cached (default: off)
+
+AuthIBMDB2CacheFile             path to cache file (default: /tmp/auth_cred_cache)
+
+AuthIBMDB2CacheLifetime         cache lifetime in seconds (default: 300)
 
 
 
 Example how to use the module in the httpd.conf:
 
 <Directory "/var/www/my_test_dir">
-    AuthName            "DB2 Authentication"
-    AuthType            Basic
+    AuthName                     "DB2 Authentication"
+    AuthType                     Basic
 
     AuthIBMDB2User               db2inst1
     AuthIBMDB2Password           db2inst1
@@ -84,15 +89,15 @@ Example how to use the module in the httpd.conf:
     AuthIBMDB2GroupField         groupname
 
     #require                     valid-user
-    require                      group admin
+    require group                admin
     AllowOverride                None
 </Directory>
 
 or
 
 <Directory "/var/www/my_test_dir">
-    AuthName            "DB2 Authentication"
-    AuthType            Basic
+    AuthName                     "DB2 Authentication"
+    AuthType                     Basic
 
     AuthIBMDB2User               db2inst1
     AuthIBMDB2Password           db2inst1
@@ -103,7 +108,7 @@ or
     AuthIBMDB2Caching            On
     AuthIBMDB2GroupCaching       On
 
-    require                      group admin
+    require group                admin
     AllowOverride                None
 </Directory>
 
@@ -112,7 +117,7 @@ where the stored procedures must have the following parameter format:
 CREATE PROCEDURE user_sp  ( IN VARCHAR, OUT VARCHAR )
 CREATE PROCEDURE group_sp ( IN VARCHAR )
 
-The stored procedure for user authentication must return exact one value -
+The stored procedure for user authentication must return exactly one value -
 the password. If AuthIBMDB2NoPasswd is set to yes, then the username has
 to be returned instead of the password.
 
@@ -124,12 +129,12 @@ Two examples for stored procedures are given in the documentation.
 2) File descriptions
 --------------------
 
-mod_auth_ibmdb2.c	the Apache module
-mod_auth_ibmdb2.h	the Apache module's header file
-caching.h		include file for caching mechanism
-makemod			bash script to compile the module
-makemod.bat		script to compile the module under win32
-README			this file
-INSTALL			compiling and installing instructions
-CHANGES			change log
-man/maninstall		bash script to install the manpages
+mod_auth_ibmdb2.c       the Apache module
+mod_auth_ibmdb2.h       the Apache module's header file
+caching.h               include file for caching mechanism
+makemod                 bash script to compile the module
+makemod.bat             script to compile the module under win32
+README                  this file
+INSTALL                 compile and install instructions
+CHANGES                 change log
+man/maninstall          bash script to install the manpages
