@@ -1,7 +1,5 @@
 #! /bin/sh
 
-# $Id$
-
 # SCRIPT: makemod
 # Builds the mod_auth_ibmdb2 module and moves it to the modules directory
 # Usage: makemod
