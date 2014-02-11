@@ -21,8 +21,6 @@
   +----------------------------------------------------------------------+
 */
 
-/* $Id$ */
-
 #define MODULE "mod_auth_ibmdb2"
 
 #define PCALLOC apr_pcalloc
