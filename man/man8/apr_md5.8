@@ -1,0 +1,42 @@
+.TH apr_md5 "8" "June 2004" "apr_md5" "DB2 User Defined Function"
+.SH NAME
+apr_md5 \- DB2 UDF for encrypting passwords
+.SH SYNOPSIS
+>>-APR_MD5--(--expression--)-----------------------------------><
+.SH DESCRIPTION
+Seeded MD5 hash. The apr_md5 function is compatible to the Apache function that is used in the htpasswd utility.
+.PP
+The argument can be a character string that is either a CHAR or VARCHAR not exceeding 120 bytes.
+.PP
+The result of the function is VARCHAR(37). The result can be null; if the argument is null, the result is the null value.
+.SH EXAMPLES
+1)
+.br
+Inserting the user \fItest\fR and the seeded md5 hash of the clear text 
+.br
+\fItestpwd\fR to the table \fIusers\fR.
+.PP
+.nf
+INSERT INTO USERS (username, password) 
+  VALUES ('test', apr_md5('testpwd'))
+.fi
+.PP
+2)
+.br
+.nf
+SELECT apr_md5( 'testpwd' ) FROM SYSIBM.SYSDUMMY1
+
+1                                    
+-------------------------------------
+$apr1$HsTNH...$bmlPUSoPOF/Qhznl.sAq6/
+
+  1 record(s) selected.
+.fi
+.SH AUTHOR
+Written by Helmut K. C. Tessarek.
+.SH "BUGS"
+Hopefully none :-) But if you find one, please report it at:
+.br
+http://sourceforge.net/tracker/?func=add&group_id=103064&atid=633717
+.SH "WEB SITE"
+http://mod-auth-ibmdb2.sourceforge.net

@@ -1,0 +1,136 @@
+.TH db2-auth-udfs "8" "June 2004" "db2-auth-udfs 1.1" "DB2 User Defined Functions"
+.SH NAME
+db2-auth-udfs \- DB2 UDFs for encrypting passwords
+.SH SYNOPSIS
+>>-MD5--(--expression--)---------------------------------------><
+.PP
+>>-APR_MD5--(--expression--)-----------------------------------><
+.PP
+>>-APR_CRYPT--(--expression--)---------------------------------><
+.PP
+>>-APR_SHA1--(--expression--)----------------------------------><
+.SH DESCRIPTION
+These functions can be used to encrypt passwords within DB2.
+.PP
+.TP
+\fBmd5( '\fR\fIcleartext\fR\fB' )\fR
+MD5 hash. The md5 function is compatible to the PHP md5 function.
+.IP
+The argument can be a character string that is either a CHAR or VARCHAR not exceeding 120 bytes.
+.IP
+The result of the function is VARCHAR(32). The result can be null; if the argument is null, the result is the null value.
+.TP
+\fBapr_md5( '\fR\fIcleartext\fR\fB' )\fR
+Seeded MD5 hash. The apr_md5 function is compatible to the Apache function that is used in the htpasswd utility.
+.IP
+The argument can be a character string that is either a CHAR or VARCHAR not exceeding 120 bytes.
+.IP
+The result of the function is VARCHAR(37). The result can be null; if the argument is null, the result is the null value.
+.TP
+\fBapr_crypt( '\fR\fIcleartext\fR\fB' )\fR
+Unix crypt. The apr_crypt is compatible to the Apache function that is used in the htpasswd utility.
+.IP
+The argument can be a character string that is either a CHAR or VARCHAR not exceeding 120 bytes.
+.IP
+The result of the function is VARCHAR(13). The result can be null; if the argument is null, the result is the null value.
+.TP
+\fBapr_sha1( '\fR\fIcleartext\fR\fB' )\fR
+SHA1 algorithm. Not used in mod_auth_ibmdb2. The apr_sha1 is compatible to the Apache function that is used in the htpasswd utility.
+.IP
+The argument can be a character string that is either a CHAR or VARCHAR not exceeding 120 bytes.
+.IP
+The result of the function is VARCHAR(33). The result can be null; if the argument is null, the result is the null value.
+.SH EXAMPLES
+\fBmd5 (1)\fR
+.br
+Inserting the user \fItest\fR and the md5 hash of the clear text \fItestpwd\fR to the table \fIusers\fR.
+.PP
+.nf
+INSERT INTO USERS (username, password) 
+  VALUES ('test', md5('testpwd'))
+.fi
+.PP
+\fBmd5 (2)\fR
+.br
+.nf
+SELECT md5( 'testpwd' ) FROM SYSIBM.SYSDUMMY1
+
+1
+--------------------------------
+342df5b036b2f28184536820af6d1caf
+
+  1 record(s) selected.
+.fi
+.PP
+\fBapr_md5 (1)\fR
+.br
+Inserting the user \fItest\fR and the seeded md5 hash of the clear text 
+.br
+\fItestpwd\fR to the table \fIusers\fR.
+.PP
+.nf
+INSERT INTO USERS (username, password) 
+  VALUES ('test', apr_md5('testpwd'))
+.fi
+.PP
+\fBapr_md5 (2)\fR
+.br
+.nf
+SELECT apr_md5( 'testpwd' ) FROM SYSIBM.SYSDUMMY1
+
+1                                    
+-------------------------------------
+$apr1$HsTNH...$bmlPUSoPOF/Qhznl.sAq6/
+
+  1 record(s) selected.
+.fi
+.PP
+\fBapr_crypt (1)\fR
+.br
+Inserting the user \fItest\fR and the crypted clear text \fItestpwd\fR to the table \fIusers\fR.
+.PP
+.nf
+INSERT INTO USERS (username, password) 
+  VALUES ('test', apr_crypt('testpwd'))
+.fi
+.PP
+\fBapr_crypt (2)\fR
+.br
+.nf
+SELECT apr_crypt( 'testpwd' ) FROM SYSIBM.SYSDUMMY1
+
+1            
+-------------
+cqs7uOvz8KBlk
+
+  1 record(s) selected.
+.fi
+.PP
+\fBapr_sha1 (1)\fR
+.br
+Inserting the user \fItest\fR and the sha1 crypted clear text \fItestpwd\fR to the table \fIusers\fR.
+.PP
+.nf
+INSERT INTO USERS (username, password) 
+  VALUES ('test', apr_sha1('testpwd'))
+.fi
+.PP
+\fBapr_sha1 (2)\fR
+.br
+.nf
+SELECT apr_sha1( 'testpwd' ) FROM SYSIBM.SYSDUMMY1
+
+1                                
+---------------------------------
+{SHA}mO8HWOaqxvmp4Rl1SMgZC3LJWB0=
+
+  1 record(s) selected.
+.fi
+.SH AUTHOR
+Written by Helmut K. C. Tessarek.
+.SH "BUGS"
+Hopefully none :-) But if you find one, please report it at:
+.br
+http://sourceforge.net/tracker/?func=add&group_id=103064&atid=633717
+.SH "WEB SITE"
+http://mod-auth-ibmdb2.sourceforge.net

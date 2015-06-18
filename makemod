@@ -1,0 +1,69 @@
+#! /bin/sh
+
+# $Id: makemod,v 1.2 2006/02/17 11:18:43 tessus Exp $
+
+# SCRIPT: makemod
+# Builds the mod_auth_ibmdb2 module and moves it to the modules directory
+# Usage: makemod
+
+# Set DB2PATH to where DB2 will be accessed.
+# Set APACHEVERSION to 
+#	APACHE1		Apache 1.x
+#	APACHE2		Apache 2.x
+# Set APXS to the path that points to your apxs binary
+
+# Path settings
+
+DB2PATH=/home/db2inst1/sqllib
+APACHEVERSION=APACHE2
+APXS=/usr/local/apache/bin/apxs
+
+#
+# clean up left-overs from previous build:
+#
+if [ -d .libs ]
+then
+	rm -rf .libs
+fi
+
+for x in mod_auth_ibmdb2.la mod_auth_ibmdb2.lo mod_auth_ibmdb2.o mod_auth_ibmdb2.slo mod_auth_ibmdb2.so
+do
+	if [ -f $x ]
+	then
+		rm $x
+	fi
+done
+
+# Determine if we are running with 32bit DB2 UDB on Linux AMD64
+EXTRA_C_FLAGS=""
+HARDWAREPLAT=`uname -m`
+if [ "$HARDWAREPLAT" = "x86_64" ]; then
+   # Now test for bit width
+   bitwidth=`LANG=C db2level | awk '/bits/{print $5}'`
+   if [ $bitwidth = "\"32\"" ]; then
+       EXTRA_C_FLAGS="-m32"
+   fi
+fi
+
+# Set extra flags for the linker
+
+if [ "`uname`" = "AIX" ]
+then
+	EXTRA_LFLAG="-Wl,-G,-blibpath:$DB2PATH/lib"
+else
+	EXTRA_LFLAG="-Wl,-rpath,$DB2PATH/lib"
+fi
+
+# Build the module
+
+$APXS -c -D $APACHEVERSION -I$DB2PATH/include -L$DB2PATH/lib $EXTRA_LFLAG -ldb2 -lcrypt -lgdbm mod_auth_ibmdb2.c
+
+# Moving the module to the apropriate directory
+
+if [ "$APACHEVERSION" = "APACHE2" ]; then
+   $APXS -i mod_auth_ibmdb2.la
+fi
+
+if [ "$APACHEVERSION" = "APACHE1" ]; then
+   $APXS -i mod_auth_ibmdb2.so
+fi

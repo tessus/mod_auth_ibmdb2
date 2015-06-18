@@ -1,0 +1,40 @@
+.TH apr_sha1 "8" "June 2004" "apr_sha1" "DB2 User Defined Function"
+.SH NAME
+apr_sha1 \- DB2 UDF for encrypting passwords
+.SH SYNOPSIS
+>>-APR_SHA1--(--expression--)----------------------------------><
+.SH DESCRIPTION
+SHA1 algorithm. Not used in mod_auth_ibmdb2. The apr_sha1 is compatible to the Apache function that is used in the htpasswd utility.
+.PP
+The argument can be a character string that is either a CHAR or VARCHAR not exceeding 120 bytes.
+.PP
+The result of the function is VARCHAR(33). The result can be null; if the argument is null, the result is the null value.
+.SH EXAMPLES
+1)
+.br
+Inserting the user \fItest\fR and the sha1 crypted clear text \fItestpwd\fR to the table \fIusers\fR.
+.PP
+.nf
+INSERT INTO USERS (username, password) 
+  VALUES ('test', apr_sha1('testpwd'))
+.fi
+.PP
+2)
+.br
+.nf
+SELECT apr_sha1( 'testpwd' ) FROM SYSIBM.SYSDUMMY1
+
+1                                
+---------------------------------
+{SHA}mO8HWOaqxvmp4Rl1SMgZC3LJWB0=
+
+  1 record(s) selected.
+.fi
+.SH AUTHOR
+Written by Helmut K. C. Tessarek.
+.SH "BUGS"
+Hopefully none :-) But if you find one, please report it at:
+.br
+http://sourceforge.net/tracker/?func=add&group_id=103064&atid=633717
+.SH "WEB SITE"
+http://mod-auth-ibmdb2.sourceforge.net
