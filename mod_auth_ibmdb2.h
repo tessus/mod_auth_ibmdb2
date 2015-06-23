@@ -2,7 +2,7 @@
   +----------------------------------------------------------------------+
   | mod_auth_ibmdb2: structures, defines, globals                        |
   +----------------------------------------------------------------------+
-  | Copyright (c) 2004-2014 Helmut K. C. Tessarek                        |
+  | Copyright (c) 2006-2015 Helmut K. C. Tessarek                        |
   +----------------------------------------------------------------------+
   | Licensed under the Apache License, Version 2.0 (the "License"); you  |
   | may not use this file except in compliance with the License. You may |
@@ -17,7 +17,7 @@
   +----------------------------------------------------------------------+
   | Author: Helmut K. C. Tessarek                                        |
   +----------------------------------------------------------------------+
-  | Website: http://mod-auth-ibmdb2.sourceforge.net                      |
+  | Website: http://tessus.github.io/mod_auth_ibmdb2                     |
   +----------------------------------------------------------------------+
 */
 
@@ -33,8 +33,8 @@
 
 #define MAX_IBMDB2_UID_LENGTH   18
 #define MAX_IBMDB2_PWD_LENGTH   30
-#define MAX_UID_LENGTH          32
-#define MAX_PWD_LENGTH          64
+#define MAX_UID_LENGTH          64
+#define MAX_PWD_LENGTH         128
 #define MAX_GRP_LENGTH         128
 #define MAX_DSN_LENGTH         512
 

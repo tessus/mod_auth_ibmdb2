@@ -1,16 +1,17 @@
-Copyright (c) 2004-2014 Helmut K. C. Tessarek
-written by Helmut K. C. Tessarek
-
-http://mod-auth-ibmdb2.sourceforge.net
-
-Contents:
----------
-
-1)  Description of the module
-2)  File descriptions
++----------------------------------------------------------------------+
+| mod_auth_ibmdb2                                               README |
++----------------------------------------------------------------------+
+| Author: Helmut K. C. Tessarek                                        |
++----------------------------------------------------------------------+
+| Website: http://tessus.github.io/mod_auth_ibmdb2                     |
++----------------------------------------------------------------------+
 
 1) Description of the module
------------------------------
+2) File descriptions
+
++----------------------------------------------------------------------+
+| 1. Description of the module                                         |
++----------------------------------------------------------------------+
 
 mod_auth_ibmdb2 is an Apache authentication module using IBM DB2 as the backend database for
 storing user and group information. The module is designed for Apache 2.0.x and supports
@@ -39,11 +40,11 @@ AuthIBMDB2GroupField            name of the group field within the table (defaul
 
 AuthIBMDB2PasswordField         name of the password field within the table (default: password)
 
-AuthIBMDB2CryptedPasswords      passwords are stored encrypted (default: yes) 
+AuthIBMDB2CryptedPasswords      passwords are stored encrypted (default: yes)
 
 AuthIBMDB2KeepAlive             connection kept open across requests (default: yes)
 
-AuthIBMDB2Authoritative         lookup is authoritative (default: yes) 
+AuthIBMDB2Authoritative         lookup is authoritative (default: yes)
 
 AuthIBMDB2NoPasswd              just check, if user is in usertable (default: no)
 
@@ -124,8 +125,9 @@ to the resultset.
 
 Two examples for stored procedures are given in the documentation.
 
-2) File descriptions
---------------------
++----------------------------------------------------------------------+
+| 2. File descriptions                                                 |
++----------------------------------------------------------------------+
 
 mod_auth_ibmdb2.c       the Apache module
 mod_auth_ibmdb2.h       the Apache module's header file
@@ -134,5 +136,5 @@ makemod                 bash script to compile the module
 makemod.bat             script to compile the module under win32
 README                  this file
 INSTALL                 compile and install instructions
-CHANGES                 change log
+ChangeLog               change log
 man/maninstall          bash script to install the manpages

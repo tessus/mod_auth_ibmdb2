@@ -2,7 +2,7 @@
   +----------------------------------------------------------------------+
   | mod_auth_ibmdb2: authentication using an IBM DB2 database            |
   +----------------------------------------------------------------------+
-  | Copyright (c) 2004-2014 Helmut K. C. Tessarek                        |
+  | Copyright (c) 2006-2015 Helmut K. C. Tessarek                        |
   +----------------------------------------------------------------------+
   | Licensed under the Apache License, Version 2.0 (the "License"); you  |
   | may not use this file except in compliance with the License. You may |
@@ -17,11 +17,12 @@
   +----------------------------------------------------------------------+
   | Author: Helmut K. C. Tessarek                                        |
   +----------------------------------------------------------------------+
-  | Website: http://mod-auth-ibmdb2.sourceforge.net                      |
+  | Website: http://tessus.github.io/mod_auth_ibmdb2                     |
   +----------------------------------------------------------------------+
 */
 
 #define MODULE "mod_auth_ibmdb2"
+#define RELEASE "2.0.1"
 
 #define PCALLOC apr_pcalloc
 #define SNPRINTF apr_snprintf
@@ -67,7 +68,7 @@ static apr_status_t mod_auth_ibmdb2_cleanup(void *notused)
 	SQLDisconnect( hdbc );                 	// disconnect the database connection
 	SQLFreeHandle( SQL_HANDLE_DBC, hdbc ); 	// free the connection handle
 	SQLFreeHandle( SQL_HANDLE_ENV, henv );  // free the environment handle
-	
+
 	return APR_SUCCESS;
 }
 /* }}} */
@@ -94,34 +95,50 @@ int validate_pw( const char *sent, const char *real )
 	char md5str[33];
 	unsigned char digest[APR_MD5_DIGESTSIZE];
 	apr_md5_ctx_t context;
-	char *r;
+	char *r, *result;
 	apr_status_t status;
-	
-	if( strlen( real ) == 32 )
+
+	if( (strlen(real) == 32) && (real[0] != '$') )
 	{
 		md5str[0] = '\0';
 
 		apr_md5_init( &context );
 		apr_md5_update( &context, sent, strlen(sent) );
 		apr_md5_final( digest, &context );
-		for( i = 0, r = md5str; i < 16; i++, r += 2 ) 
+		for( i = 0, r = md5str; i < 16; i++, r += 2 )
 		{
 			sprintf( r, "%02x", digest[i] );
 		}
 		*r = '\0';
-		
+
 		if( apr_strnatcmp( real, md5str ) == 0 )
 			return TRUE;
 		else
 			return FALSE;
 	}
-	
+
 	status = apr_password_validate( sent, real );
 
 	if( status == APR_SUCCESS )
 	   return TRUE;
+#ifndef WIN32
 	else
-	   return FALSE;
+	{
+		// maybe a different encrypted password (glibc2 crypt)?
+		result = crypt( sent, real );
+		if( result != NULL )
+		{
+			if( strcmp( real, result ) == 0 )
+				return TRUE;
+			else
+				return FALSE;
+		}
+		else
+		{
+			return FALSE;
+		}
+	}
+#endif
 }
 /* }}} */
 
@@ -251,7 +268,7 @@ SQLRETURN ibmdb2_connect( request_rec *r, ibmdb2_auth_config_rec *m )
 	// allocate an environment handle
 
 	sqlrc = SQLAllocHandle( SQL_HANDLE_ENV, SQL_NULL_HANDLE, &henv );
-	
+
 	if( sqlrc != SQL_SUCCESS )
 	{
 		sqlerr = get_handle_err( SQL_HANDLE_ENV, henv, sqlrc );
@@ -263,7 +280,7 @@ SQLRETURN ibmdb2_connect( request_rec *r, ibmdb2_auth_config_rec *m )
 	// allocate a connection handle
 
 	sqlrc = SQLAllocHandle( SQL_HANDLE_DBC, henv, &hdbc );
-	
+
 	if( sqlrc != SQL_SUCCESS )
 	{
 		sqlerr = get_handle_err( SQL_HANDLE_ENV, henv, sqlrc );
@@ -271,7 +288,7 @@ SQLRETURN ibmdb2_connect( request_rec *r, ibmdb2_auth_config_rec *m )
 		LOG_DBG( sqlerr.msg );
 		return( SQL_ERROR );
 	}
-	
+
 	// Set AUTOCOMMIT ON (all we are doing are SELECTs)
 
 	if( SQLSetConnectAttr( hdbc, SQL_ATTR_AUTOCOMMIT, ( void * ) SQL_AUTOCOMMIT_ON, SQL_NTS ) != SQL_SUCCESS )
@@ -285,20 +302,20 @@ SQLRETURN ibmdb2_connect( request_rec *r, ibmdb2_auth_config_rec *m )
 	uid = m->ibmdb2user;
 	pwd = m->ibmdb2passwd;
 	db  = m->ibmdb2DB;
-	
+
 	host = m->ibmdb2host;
 	port = m->ibmdb2port;
-	
+
 	if( !host || (strcmp(host, "NULL") == 0) ) // if hostname not set or not string 'NULL', assume a cataloged database
 	{
 		sqlrc = SQLConnect( hdbc, db, SQL_NTS, uid, SQL_NTS, pwd, SQL_NTS );
 		LOG_DBG( "  SQLConnect" );
-	} 
+	}
 	else
 	{
 		SNPRINTF( dsn, sizeof(dsn), "Driver={IBM DB2 ODBC DRIVER};Database=%s;Hostname=%s;Port=%d; Protocol=TCPIP;Uid=%s;Pwd=%s;", db, host, port, uid, pwd );
 		sqlrc = SQLDriverConnect(hdbc, (SQLHWND)NULL, (SQLCHAR*)dsn, SQL_NTS, NULL, 0, NULL, SQL_DRIVER_NOPROMPT );
-		LOG_DBG( "  SQLDriverConnect" ); 
+		LOG_DBG( "  SQLDriverConnect" );
 	}
 
 	if( sqlrc != SQL_SUCCESS )
@@ -386,16 +403,16 @@ static void *create_ibmdb2_auth_dir_config( apr_pool_t *p, char *d )
 
 /* {{{ static command_rec ibmdb2_auth_cmds[] =
 */
-static command_rec ibmdb2_auth_cmds[] = 
+static command_rec ibmdb2_auth_cmds[] =
 {
 	AP_INIT_TAKE1("AuthIBMDB2Database", ap_set_string_slot,
 	(void *) APR_XtOffsetOf(ibmdb2_auth_config_rec, ibmdb2DB),
 	OR_AUTHCFG, "ibmdb2 database name"),
-	
+
 	AP_INIT_TAKE1("AuthIBMDB2Hostname", ap_set_string_slot,
 	(void *) APR_XtOffsetOf(ibmdb2_auth_config_rec, ibmdb2host),
 	OR_AUTHCFG, "ibmdb2 database server hostname"),
-	
+
 	AP_INIT_TAKE1("AuthIBMDB2Portnumber", ap_set_int_slot,
 	(void *) APR_XtOffsetOf(ibmdb2_auth_config_rec, ibmdb2port),
 	OR_AUTHCFG, "ibmdb2 database instance port"),
@@ -455,7 +472,7 @@ static command_rec ibmdb2_auth_cmds[] =
 	AP_INIT_TAKE1("AuthIBMDB2UserProc", ap_set_string_slot,
 	(void *) APR_XtOffsetOf(ibmdb2_auth_config_rec, ibmdb2UserProc),
 	OR_AUTHCFG, "stored procedure for user authentication"),
-	
+
 	AP_INIT_TAKE1("AuthIBMDB2GroupProc", ap_set_string_slot,
 	(void *) APR_XtOffsetOf(ibmdb2_auth_config_rec, ibmdb2GroupProc),
 	OR_AUTHCFG, "stored procedure for group authentication"),
@@ -484,47 +501,29 @@ static command_rec ibmdb2_auth_cmds[] =
 */
 static int mod_auth_ibmdb2_init_handler( apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptemp, server_rec *s )
 {
-	char *src, *tgt, *rev;
 	char release[40];
 	char errmsg[MAXERRLEN];
 	char *env;
-	int srclen = 0, i = 0;
-
-	src = "$Revision$";
-	srclen = strlen(src);
-	rev = (char*)malloc(srclen*sizeof(char));
-	tgt = rev;
-
-	while( *src != ':' && i < srclen )
-		src++; i++;
-	if( *src == ':' )
-		src++; src++;
-
-	while( *src != '$' && i < srclen )
-		*tgt++ = *src++; i++;
-	tgt--;
-	*tgt = 0;
 
 	release[0] = '\0';
-	SNPRINTF( release, sizeof(release), "%s/%s", MODULE, rev );
-	free(rev);
+	SNPRINTF( release, sizeof(release), "%s/%s", MODULE, RELEASE );
 
 	ap_add_version_component( p, release );
-	
+
 	errmsg[0] = '\0';
 	if( apr_env_get( &env, "DB2INSTANCE", p ) != APR_SUCCESS )
 		sprintf( errmsg, "DB2INSTANCE=[%s]", "not set" );
 	else
 		sprintf( errmsg, "DB2INSTANCE=[%s]", env );
 	LOG_DBGS( errmsg );
-	
+
 	errmsg[0] = '\0';
 	if( apr_env_get( &env, "LD_LIBRARY_PATH", p ) != APR_SUCCESS )
 		sprintf( errmsg, "LD_LIBRARY_PATH=[%s]", "not set" );
 	else
 		sprintf( errmsg, "LD_LIBRARY_PATH=[%s]", env );
 	LOG_DBGS( errmsg );
-	
+
 	return OK;
 }
 /* }}} */
@@ -565,19 +564,19 @@ static char *get_ibmdb2_pw( request_rec *r, const char *user, ibmdb2_auth_config
 
 		return NULL;
 	}
-	
+
 	/*
 		If we are using a stored procedure, then some of the other parameters
 		are irrelevant. So process the stored procedure first.
 	*/
-	
+
 	if( m->ibmdb2UserProc )
 	{
 		// construct SQL statement
-		
+
 		SNPRINTF( query, sizeof(query)-1, "CALL %s( '%s', ? )",
 			m->ibmdb2UserProc, user );
-			
+
 		sprintf( errmsg, "    statement=[%s]", query );
 		LOG_DBG( errmsg );
 
@@ -592,11 +591,11 @@ static char *get_ibmdb2_pw( request_rec *r, const char *user, ibmdb2_auth_config
 		// prepare the statement
 
 		sqlrc = SQLPrepare( hstmt, query, SQL_NTS ) ;
-		
+
 		LOG_DBG( "    bind the parameter" );
-		
+
 		// bind the parameter
-		
+
 		sqlrc = SQLBindParameter(hstmt,
 							1,
 							SQL_PARAM_OUTPUT,
@@ -604,13 +603,13 @@ static char *get_ibmdb2_pw( request_rec *r, const char *user, ibmdb2_auth_config
 							0, 0,
 							passwd.val, MAX_PWD_LENGTH,
 							&passwd.ind);
-		
+
 		LOG_DBG( "    execute the statement" );
 
 		// execute the statement for username
 
 		sqlrc = SQLExecute( hstmt ) ;
-		
+
 		if( sqlrc != SQL_SUCCESS )				/* check statement */
 		{
 			sqlerr = get_stmt_err( hstmt, sqlrc );
@@ -640,6 +639,9 @@ static char *get_ibmdb2_pw( request_rec *r, const char *user, ibmdb2_auth_config
 				   ibmdb2_disconnect( r, m ) ;
 				   return NULL;
 				   break;
+				case 445:                   // data truncated
+				   LOG_DBG( "    data might be truncated!" );
+				   break;
 				default:
 				   LOG_ERROR( "IBMDB2 error: statement cannot be processed" );
 				   LOG_DBG( sqlerr.msg );
@@ -649,7 +651,7 @@ static char *get_ibmdb2_pw( request_rec *r, const char *user, ibmdb2_auth_config
 				   break;
 			}
 		}
-		
+
 		if( m->ibmdb2NoPasswd )
 		{
 			if( strcmp( passwd.val, user ) != 0 )
@@ -660,7 +662,7 @@ static char *get_ibmdb2_pw( request_rec *r, const char *user, ibmdb2_auth_config
 				return NULL;
 			}
 		}
-		
+
 		if( passwd.ind > 0 )
 		{
 			errmsg[0] = '\0';
@@ -670,7 +672,7 @@ static char *get_ibmdb2_pw( request_rec *r, const char *user, ibmdb2_auth_config
 				sprintf( errmsg, "    password from database=[%s]", passwd.val );
 			LOG_DBG( errmsg );
 		}
-				
+
 		LOG_DBG( "    free statement handle" );
 
 		// free the statement handle
@@ -793,6 +795,9 @@ static char *get_ibmdb2_pw( request_rec *r, const char *user, ibmdb2_auth_config
 			   sqlrc = SQLFreeHandle( SQL_HANDLE_STMT, hstmt ) ;
 			   ibmdb2_disconnect( r, m ) ;
 			   return NULL;
+			   break;
+			case 445:                       // data truncated
+			   LOG_DBG( "    data might be truncated!" );
 			   break;
 			default:
 			   LOG_ERROR( "IBMDB2 error: statement cannot be processed" );
@@ -932,7 +937,7 @@ static char **get_ibmdb2_groups( request_rec *r, char *user, ibmdb2_auth_config_
 			m->ibmdb2GroupField, m->ibmdb2grptable, m->ibmdb2NameField,
 			user);
 	}
-	
+
 	if( m->ibmdb2GroupProc )
 	{
 		query[0] = '\0';
@@ -1031,6 +1036,9 @@ static char **get_ibmdb2_groups( request_rec *r, char *user, ibmdb2_auth_config_
 			   sqlrc = SQLFreeHandle( SQL_HANDLE_STMT, hstmt ) ;
 			   ibmdb2_disconnect( r, m ) ;
 			   return NULL;
+			   break;
+			case 445:                       // data truncated
+			   LOG_DBG( "    data might be truncated!" );
 			   break;
 			default:
 			   LOG_ERROR( "IBMDB2 error: statement cannot be processed" );
@@ -1181,7 +1189,7 @@ static int ibmdb2_authenticate_basic_user( request_rec *r )
 
 	sprintf( errmsg, "begin authenticate for user=[%s], uri=[%s]", user, r->uri );
 	LOG_DBG( errmsg );
-	
+
 	// not configured for ibmdb2 authorization
 
     if( !sec->ibmdb2pwtable && !sec->ibmdb2UserProc )
@@ -1367,7 +1375,7 @@ static int ibmdb2_check_auth( request_rec *r )
 
 				while( groups[i] )
 				{
-					// last element is NULL 
+					// last element is NULL
 					if( !strcmp(groups[i],want) )
 					   return OK;			// we found the user!
 

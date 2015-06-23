@@ -1,39 +1,42 @@
-.TH apr_crypt "8" "June 2012" "apr_crypt" "DB2 User Defined Function and Stored Procedure"
+.TH apr_crypt "8" "June 2015" "apr_crypt" "DB2 User Defined Function and Stored Procedure"
 .SH NAME
-apr_crypt \- DB2 UDF and SP for encrypting passwords
+apr_crypt \- DB2 UDF and SP to generate a seeded CRYPT
 .SH SYNOPSIS
 >>-APR_CRYPT--(--expression--)---------------------------------><
 .PP
 >>-APR_CRYPT--(--expression--,--hash--)------------------------><
 .SH DESCRIPTION
-Unix crypt. The apr_crypt routine is compatible to the Apache function that is used in the htpasswd utility.
+Unix crypt. The apr_crypt routine is compatible to the function used in Apache's htpasswd utility.
 .PP
-The argument can be a character string that is either a CHAR or VARCHAR not exceeding 120 bytes.
+The argument can be a character string that is either a CHAR or VARCHAR not exceeding 4096 bytes.
 .PP
 The result of the function is CHAR(13). The result can be null; if the argument is null, the result is the null value.
 .SH EXAMPLES
-1)
+\fBExample 1:\fR
+
 .br
 Inserting the user \fItest\fR and the crypted clear text \fItestpwd\fR to the table \fIusers\fR.
 .PP
 .nf
-INSERT INTO USERS (username, password) 
+INSERT INTO USERS (username, password)
   VALUES ('test', apr_crypt('testpwd'))
 .fi
 .PP
-2)
+\fBExample 2:\fR
+
 .br
 .nf
 SELECT apr_crypt('testpwd') FROM SYSIBM.SYSDUMMY1
 
-1            
+1
 -------------
 cqs7uOvz8KBlk
 
   1 record(s) selected.
 .fi
 .PP
-3)
+\fBExample 3:\fR
+
 .br
 .nf
 CALL apr_crypt('testpwd', ?)
@@ -50,6 +53,6 @@ Written by Helmut K. C. Tessarek.
 .SH "BUGS"
 Hopefully none :-) But if you find one, please report it at:
 .br
-http://sourceforge.net/tracker/?func=add&group_id=103064&atid=633717
+https://github.com/tessus/db2-hash-routines/issues
 .SH "WEB SITE"
-http://mod-auth-ibmdb2.sourceforge.net
+http://tessus.github.io/db2-hash-routines

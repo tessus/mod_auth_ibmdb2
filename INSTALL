@@ -1,25 +1,27 @@
-Copyright (c) 2004-2014 Helmut K. C. Tessarek
-written by Helmut K. C. Tessarek
++----------------------------------------------------------------------+
+| mod_auth_ibmdb2                                              INSTALL |
++----------------------------------------------------------------------+
+| Author: Helmut K. C. Tessarek                                        |
++----------------------------------------------------------------------+
+| Website: http://tessus.github.io/mod_auth_ibmdb2                     |
++----------------------------------------------------------------------+
 
-http://mod-auth-ibmdb2.sourceforge.net
+1) Building the module
+2) Details on building the module (Linux)
+3) Installing the man pages
 
-Contents:
----------
++----------------------------------------------------------------------+
+| 1. Building the module                                               |
++----------------------------------------------------------------------+
 
-1)  Building the module
-2)  Details on building the module (Linux)
-3)  Installing the manpages
-
-1) Building the library
------------------------
-
-Please change the PATH settings and the APXS variable 
+Please change the PATH settings and the APXS variable
 in the makemod script for your environment.
 
 run as root: ./makemod
 
-2) Details on building the module
----------------------------------
++----------------------------------------------------------------------+
+| 2. Details on building the module                                    |
++----------------------------------------------------------------------+
 
 DB2PATH=/home/db2inst1/sqllib
 EXTRA_LFLAG="-Wl,-rpath,$DB2PATH/lib"
@@ -46,8 +48,9 @@ Finally, add the following directive to httpd.conf:
 
 LoadModule ibmdb2_auth_module modules/mod_auth_ibmdb2.so
 
-3) Installing the manpages
---------------------------
++----------------------------------------------------------------------+
+| 3. Installing the man pages                                          |
++----------------------------------------------------------------------+
 
 Change to the ./man directory and run the script
-maninstall
+./maninstall
