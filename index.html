@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>mod_auth_ibmdb2 - Apache authentication module for IBM DB2</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">mod_auth_ibmdb2</h1>
+      <h2 class="project-tagline">Apache authentication module for IBM DB2</h2>
+      <a href="https://github.com/tessus/mod_auth_ibmdb2" class="btn">View on GitHub</a>
+      <a href="https://github.com/tessus/mod_auth_ibmdb2/releases/download/2.0.1/mod_auth_ibmdb2-2.0.1.tar.gz" class="btn">Download for 2.0.x</a>
+      <a href="https://github.com/tessus/mod_auth_ibmdb2/releases/download/0.8.4/mod_auth_ibmdb2-0.8.4.tar.gz" class="btn">Download for 1.x</a>
+    </section>
+
+    <section class="main-content">
+      <h3>
+<a id="introduction" class="anchor" href="#introduction" aria-hidden="true"><span class="octicon octicon-link"></span></a>Introduction</h3>
+<hr>
+
+<p>mod_auth_ibmdb2 is an Apache authentication module using IBM<sup>&#174;</sup> DB2<sup>&#174;</sup> as the backend database for storing user and group information. The module supports several encryption methods.</p>
+
+<p>I also provide <a href="http://tessus.github.io/db2-hash-routines/">UDFs and Stored Procedures</a> to generate and validate hashes in DB2. They are compatible to the functions that are used in Apache's htpasswd utility.</p>
+
+<p><strong>ATTENTION:<br>
+Active development of this module has been stopped.</strong></p>
+
+<h3>
+<a id="features" class="anchor" href="#features" aria-hidden="true"><span class="octicon octicon-link"></span></a>Features</h3>
+<hr>
+
+<ul>
+<li>runs under Apache 1.x and Apache 2.0.x</li>
+<li>user authentication:
+
+<ul>
+<li>bcrypt (APR-util ≥ 1.5.0)</li>
+<li>md5
+
+<ul>
+<li>normal md5 hash (32 chars as in php)</li>
+<li>seeded md5 value (as generated with Apache's htpasswd utility or as in /etc/shadow)</li>
+</ul>
+</li>
+<li>crypt</li>
+<li>sha1 (not available in mod_auth_ibmdb2 for Apache 1.x)</li>
+<li>plain text</li>
+<li>no password (checks only if user exists)</li>
+</ul>
+</li>
+<li>if passwords are encrypted, the validation process checks the kind of encryption method</li>
+<li>stored procedure support (not available in mod_auth_ibmdb2 for Apache 1.x)</li>
+<li>support for user and group conditions (restricting result set of query)</li>
+<li>caching support for users and groups</li>
+<li>UDFs and SPs to generate and validate hashes in DB2</li>
+<li>php scripts for importing users into DB2</li>
+<li>man pages</li>
+</ul>
+
+Requirements: IBM<sup>&#174;</sup> DB2<sup>&#174;</sup>, Apache Portable Runtime
+
+<h3>
+<a id="documentation" class="anchor" href="#documentation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Documentation</h3>
+<hr>
+
+<p><a href="http://tessus.github.io/documentation/mod_auth_ibmdb2.pdf">Manual</a> in PDF format.</p>
+
+<h3>
+<a id="faq" class="anchor" href="#faq" aria-hidden="true"><span class="octicon octicon-link"></span></a>FAQ</h3>
+<hr>
+
+<strong>Q:</strong> IBM's Websphere plugin and mod_auth_ibmdb2 seem to break each other. What can I do?<br>
+<strong>A:</strong> mod_auth_ibmdb2 has to be loaded after the Websphere plugin.
+<br><br>
+<strong>Q:</strong> Which versions of DB2 are supported?<br>
+<strong>A:</strong> All DB2 versions currently supported by IBM. I've tested the module with all versions since DB2 UDB v7.x, but older versions should work as well.
+<br><br>
+<strong>Q:</strong> What is the difference between mod_auth_ibmdb2 and mod_authnz_ibmdb2?<br>
+<strong>A:</strong> mod_authnz_ibmdb2 is based on the new authentication backend provider scheme of Apache 2.2. This module will only work for Apache 2.2.x and later. mod_auth_ibmdb2 works for Apache 2.0.x and 1.x.
+<br><br>
+<strong>Q:</strong> What platforms are supported?<br>
+<strong>A:</strong> All POSIX platforms. I've compiled and tested the module on Linux, MacOSX and AIX. Since the modules are using the APR libraries, they can be compiled on Windows as well.
+<br><br>
+<strong>Q:</strong> Why isn't there a binary release for .....?<br>
+<strong>A:</strong> I don't have a development environment for every operating system. Furthermore I don't think that binary releases make sense for Unix style operating systems.
+<br><br>
+<strong>Q:</strong> What is the package db2-hash-routines for?<br>
+<strong>A:</strong> This package contains User Defined Functions and Stored Procedures to generate and validate hashes in DB2.
+
+
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/tessus/mod_auth_ibmdb2">mod_auth_ibmdb2</a> by <a href="https://github.com/tessus">Helmut K. C. Tessarek</a>.</span>
+      </footer>
+
+    </section>
+
+
+  </body>
+</html>
+

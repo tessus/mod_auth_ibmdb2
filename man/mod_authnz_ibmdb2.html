@@ -1,0 +1,290 @@
+<HTML>
+<HEAD><TITLE>mod_authnz_ibmdb2</TITLE></HEAD>
+<BODY>
+<PRE>
+<!-- Manpage converted by man2html 3.0.1 -->
+<B>mod_authnz_ibmdb2(8)</B>             Apache module            <B>mod_authnz_ibmdb2(8)</B>
+
+
+
+
+</PRE>
+<H2>NAME</H2><PRE>
+       mod_authnz_ibmdb2 - Apache authentication module for DB2
+
+
+</PRE>
+<H2>DESCRIPTION</H2><PRE>
+       mod_authnz_ibmdb2  is  an Apache authentication module using IBM DB2 as
+       the backend database for storing user and group information.
+
+       The module is designed for Apache 2.2 and later.  It  supports  several
+       encryption methods.
+
+
+</PRE>
+<H2>CONFIGURATION DIRECTIVES</H2><PRE>
+       These  directives  are used to control the behaviour of the authentica-
+       tion process.
+
+
+       <B>AuthIBMDB2Database</B> <I>database</I>
+              database name
+
+       <B>AuthIBMDB2Hostname</B> <I>hostname</I>
+              database server hostname (for uncataloged databases)
+
+       <B>AuthIBMDB2Portnumber</B> <I>port</I> <I>number</I>
+              database instance port
+              default value: <B>50000</B>
+
+       <B>AuthIBMDB2User</B> <I>username</I>
+              user for connecting to the DB2 database
+
+       <B>AuthIBMDB2Password</B> <I>password</I>
+              password for connecting to the DB2 database
+
+       <B>AuthIBMDB2UserTable</B> <I>usertable</I>
+              name of the user table. If not fully qualified,  the  user  that
+              was  used to connect to the database is used as the schema name.
+
+       <B>AuthIBMDB2GroupTable</B> <I>grouptable</I>
+              name of the group table. If not fully qualified, the  user  that
+              was  used to connect to the database is used as the schema name.
+
+       <B>AuthIBMDB2NameField</B> <I>namefield</I>
+              name of the username column within the user and group table
+              default value: <B>username</B>
+
+       <B>AuthIBMDB2GroupField</B> <I>groupfield</I>
+              name of the groupname column within the group table
+              default value: <B>groupname</B>
+
+       <B>AuthIBMDB2PasswordField</B> <I>passwordfield</I>
+              name of the password column within the user table
+              default value: <B>password</B>
+
+       <B>AuthIBMDB2CryptedPasswords</B> <I>[On|Off]</I>
+              If AuthIBMDB2CryptedPasswords is "On", then  the  passwords  are
+              stored  encrypted.  You  do  not  have  to  specify what kind of
+              encryption was used. Valid encryption methods  are:  normal  md5
+              hash  (32  chars as in php), seeded md5 value (as generated with
+              Apache's htpasswd utility  or  as  in  /etc/shadow),  crypt.  If
+              "Off", plaintext passwords are used.
+              default value: <B>On</B>
+
+       <B>AuthIBMDB2KeepAlive</B> <I>[On|Off]</I>
+              If  AuthIBMDB2KeepAlive  is  "On", then the server instance will
+              keep the IBMDB2 server connection open.
+              default value: <B>On</B>
+
+       <B>AuthIBMDB2Authoritative</B> <I>[On|Off]</I>
+              If AuthIBMDB2Authoritative is "Off", then iff the  user  is  not
+              found  in  the  database, let other auth modules try to find the
+              user.
+              default value: <B>On</B>
+
+       <B>AuthIBMDB2NoPasswd</B> <I>[On|Off]</I>
+              If AuthIBMDB2NoPasswd is "On", then any password the user enters
+              will be accepted as long as the user exists in the database.
+              default value: <B>Off</B>
+
+       <B>AuthIBMDB2UserCondition</B> <I>user</I><B>_</B><I>condition</I>
+              Can be used to restrict queries made against the user table. The
+              value should be a string that you want to be added to the end of
+              the  where-clause  when querying the table. For example, if your
+              user table has an "active" field and you only want users  to  be
+              able to login if that field is 1, you could use a directive like
+              this: AuthIBMDB2UserCondition active=1
+
+       <B>AuthIBMDB2GroupCondition</B> <I>group</I><B>_</B><I>condition</I>
+              Can be used to restrict queries made against  the  group  table.
+              The  value  should  be a string that you want to be added to the
+              end of the where-clause when querying the table. For example, if
+              your  group  table has an "active" field and you only want users
+              to be able to login if that field is 1, you could use  a  direc-
+              tive like this: AuthIBMDB2GroupCondition active=1
+
+       <B>AuthIBMDB2UserProc</B> <I>user</I><B>_</B><I>procedure</I><B>_</B><I>name</I>
+              If  set, the named stored procedure is responsible for returning
+              the password of the user in question  to  the  module.  It  must
+              return  exact one value - the password. If AuthIBMDB2NoPasswd is
+              "On", then the username has to be returned instead of the  pass-
+              word.  The  stored  procedure  must have the following parameter
+              format:
+
+              CREATE PROCEDURE user_procedure_name ( IN VARCHAR, OUT VARCHAR )
+
+       <B>AuthIBMDB2GroupProc</B> <I>group</I><B>_</B><I>procedure</I><B>_</B><I>name</I>
+              If  set, the named stored procedure is responsible for returning
+              the groups the user in question belongs to. It  must  return  an
+              open cursor to the resultset. The stored procedure must have the
+              following parameter format:
+
+              CREATE PROCEDURE group_procedure_name ( IN VARCHAR )
+
+       <B>AuthIBMDB2Caching</B> <I>[On|Off]</I>
+              If AuthIBMDB2Caching is "On", the user credentials are cached in
+              a file.
+              default value: <B>Off</B>
+
+       <B>AuthIBMDB2GroupCaching</B> <I>[On|Off]</I>
+              If  AuthIBMDB2GroupCaching  is  "On",  the  group information is
+              cached in a file that  is  named  like  the  file  specified  in
+              AuthIBMDB2CacheFile but with the extension .grp
+              default value: <B>Off</B>
+
+       <B>AuthIBMDB2CacheFile</B> <I>filename</I>
+              defines the location and name of the cache file
+              default value: <B>/tmp/auth_cred_cache</B>
+
+       <B>AuthIBMDB2CacheLifetime</B> <I>seconds</I>
+              sets the expiration timeout in seconds of the cached elements
+              default value: <B>300</B>
+
+
+</PRE>
+<H2>EXAMPLES</H2><PRE>
+       <B>Example</B> <B>1:</B>
+
+       Let's  say  you want to protect <I>http://yourserver/private</I>. The database
+       where the users and groups are stored in is <I>authdb</I>. You want to use the
+       user  <I>db2user</I>  and  the password <I>db2pwd</I> to connect to the database. The
+       name of the usertable is <I>web.users</I> and the name of  the  grouptable  is
+       <I>web.groups</I>. The two tables look like this:
+
+       usertable:
+
+       USERNAME                       PASSWORD
+       ------------------------------ --------------------------------
+
+       grouptable:
+
+       USERNAME                       GROUPNAME
+       ------------------------------ --------------------------------
+
+       The  passwords  are stored encrypted and the database connection should
+       not be closed after the request. mod_authnz_ibmdb2 should be  the  only
+       authentication  authority and a password is needed to be authenticated.
+       The users that are in the group <I>admin</I> should be allowed to  access  the
+       protected area.
+       With the above assumptions, your httpd.conf should look like this:
+
+       LoadModule    authnz_ibmdb2_module   modules/mod_authnz_ibmdb2.so
+
+       Alias         /private               "/data/private/"
+
+       &lt;Directory "/data/private"&gt;
+           AuthName                    "DB2 Authentication for private"
+           AuthType                    Basic
+           AuthBasicProvider           ibmdb2
+
+           AuthIBMDB2User              db2user
+           AuthIBMDB2Password          db2pwd
+           AuthIBMDB2Database          authdb
+           AuthIBMDB2UserTable         web.users
+           AuthIBMDB2NameField         username
+           AuthIBMDB2PasswordField     password
+
+           AuthIBMDB2CryptedPasswords  On
+           AuthIBMDB2KeepAlive         On
+           AuthIBMDB2Authoritative     On
+           AuthIBMDB2NoPasswd          Off
+
+           AuthIBMDB2GroupTable        web.groups
+           AuthIBMDB2GroupField        groupname
+
+           require                     group admin
+           AllowOverride               None
+       &lt;/Directory&gt;
+
+       You also could have ommitted the parameters
+       AuthIBMDB2NameField, AuthIBMDB2PasswordField,
+       AuthIBMDB2CryptedPasswords, AuthIBMDB2KeepAlive,
+       AuthIBMDB2Authoritative, AuthIBMDB2NoPasswd
+       AuthIBMDB2GroupField
+       because the default values are used in the above example.
+
+       <B>Example</B> <B>2:</B>
+
+       In  this  example  we use the same assumptions as in the first example,
+       except that we want to use stored procedures. For our example we add an
+       additional column to the group table:
+
+       grouptable:
+
+       USERNAME                       GROUPNAME                        ACTIVE
+       ------------------------------ -------------------------------- --------
+
+       The two stored procedures have the following structure:
+
+       CREATE PROCEDURE db2user.user_sp
+       (IN v_username VARCHAR(128), OUT v_password VARCHAR(128))
+       LANGUAGE SQL
+       BEGIN
+         SELECT password INTO v_password FROM web.users
+       WHERE username = v_username;
+       END@
+
+       CREATE PROCEDURE db2user.group_sp
+       (IN v_username VARCHAR(128))
+       LANGUAGE SQL
+       DYNAMIC RESULT SETS 1
+       BEGIN
+         DECLARE res CURSOR WITH RETURN FOR
+         SELECT groupname FROM web.groups
+         WHERE username = v_username AND active = 1;
+
+         OPEN res;
+       END@
+
+       The stored procedures return the password and the list of groups of the
+       user passed to them. Furthermore we want the user and group information
+       to  be  cached.  The directives in the httpd.conf should then look like
+       this:
+
+       &lt;Directory "/data/private"&gt;
+           AuthName                    "DB2 Authentication for private"
+           AuthType                    Basic
+           AuthBasicProvider           ibmdb2
+
+           AuthIBMDB2User              db2user
+           AuthIBMDB2Password          db2pwd
+           AuthIBMDB2Database          authdb
+           AuthIBMDB2UserProc          user_sp
+           AuthIBMDB2GroupProc         group_sp
+
+           AuthIBMDB2Caching           On
+           AuthIBMDB2GroupCaching      On
+
+           require                     group admin
+           AllowOverride               None
+       &lt;/Directory&gt;
+
+
+</PRE>
+<H2>FILES</H2><PRE>
+       httpd.conf, .htaccess
+
+
+</PRE>
+<H2>AUTHOR</H2><PRE>
+       Written by Helmut K. C. Tessarek.
+
+
+</PRE>
+<H2>BUGS</H2><PRE>
+       Hopefully none :-) But if you find one, please report it at:
+       https://github.com/tessus/mod_authnz_ibmdb2/issues
+
+
+</PRE>
+<H2>WEB SITE</H2><PRE>
+       http://tessus.github.io/mod_authnz_ibmdb2
+
+
+
+mod_authnz_ibmdb2                  June 2015              <B>mod_authnz_ibmdb2(8)</B>
+</PRE>
+</BODY>
+</HTML>
